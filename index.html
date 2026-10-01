@@ -93,6 +93,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         <h2>Textos</h2>
         <label class="row"><input id="lbl" type="checkbox" checked><span class="t">Nombres de los elementos</span></label>
         <label class="row"><input id="cot" type="checkbox" checked><span class="sw" style="background:#5fd4ff"></span><span class="t">Cotas (cm)</span></label>
+        <label class="row"><input id="num" type="checkbox" checked><span class="sw" style="background:#ffffff"></span><span class="t">Número de escalones</span></label>
+        <p class="note">19 alzadas de 18.42 cm. Tramo 1: 10 (01 E1, 02 E2, 03 a 09 y 10 = descanso). Tramo 2: 9 (11 a 18 y 19 = llegada a PA). 17 huellas de 27 + descanso.</p>
         <label class="row" for="opt"><span class="t">Transparencia de los textos y cotas</span></label>
         <input id="opt" type="range" min="0" max="90" value="0">
       </div>
@@ -473,6 +475,21 @@ cota([127, 135, ZF(1)], [127, 135, ZF(2)], '18.42', [6, 0, 0], [1, 0, 0]);
 // niveles
 ctext('+1.892 descanso', 20, -60, Z10 + 6); ctext('+3.55 PA terminado (+3.50 losa)', 160, 275, 356); ctext('+3.366 pisada 18', 150, nz(8) - 20, t8 + 10);
 
+// ============================================================ número de escalones (01 a 19)
+function ntext(text, x, s, z, big) {
+  const c = document.createElement('canvas'), ctx = c.getContext('2d'), fs = 48, f = '600 ' + fs + 'px "IBM Plex Mono", Consolas, monospace';
+  ctx.font = f; c.width = ctx.measureText(text).width + 24; c.height = fs + 18; ctx.font = f;
+  ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#121a22'; ctx.textBaseline = 'middle'; ctx.fillText(text, 12, c.height / 2);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); textMats.push(sp.material);
+  const h = big ? .09 : .075; sp.scale.set(c.width / c.height * h, h, 1); sp.position.copy(P(x, s, z)); sp.renderOrder = 12; G('nums').add(sp);
+}
+ntext('01 E1', 60, 230, ZF(1) + 4); ntext('02 E2', 60, 176, ZF(2) + 4);
+for (let k = 3; k <= 9; k++) ntext('0' + k, 50, NF1(k) - 13.5, ZF(k) + 4);
+ntext('10 descanso', 50, -12, Z10 + 6);
+for (let j = 1; j <= 8; j++) ntext(String(10 + j), 150, nz(j) + 12, zt(j) + 6);
+ntext('19 llegada PA', 150, 232, 358);
+ntext('19 alzadas de 18.42 · tramo 1: 10 (01–10) · tramo 2: 9 (11–19) · 17 huellas de 27', 100, 60, 420, true);
 // ============================================================ capas (panel)
 const LAYERS_C = [['exist', 'Existente: V1-15, losas, contrapiso', '#7d8a96', true], ['muros', 'Muros y vidrio', '#a0826d', true],
   ['nuevo', 'Hormigón nuevo (tramos, descanso, vigas, pilares, V1-13, V1-14)', '#c9d0d6', true], ['fin', 'Porcelanato', '#d8c49a', false]];
@@ -495,6 +512,7 @@ document.getElementById('lbl').addEventListener('change', e => { G('labels').vis
 const opt = document.getElementById('opt');
 function setOpT() { const v = 1 - opt.value / 100; textMats.forEach(m => { m.opacity = v; }); cotaMat.opacity = Math.max(.15, v * .95); }
 opt.addEventListener('input', setOpT); setOpT();
+document.getElementById('num').addEventListener('change', e => { G('nums').visible = e.target.checked; });
 document.getElementById('cot').addEventListener('change', e => { G('cotas').visible = e.target.checked; });
 
 // ============================================================ vistas

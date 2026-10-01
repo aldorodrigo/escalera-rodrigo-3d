@@ -1,0 +1,427 @@
+<title>Escalera Rodrigo 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Visor técnico de obra: lienzo 3D a pantalla completa, panel de capas a la izquierda (abajo en el teléfono). Un solo look oscuro, a propósito. */
+:root {
+  --bg: #121a22; --panel: #1a2530; --line: #2c3b49; --fg: #dde6ee; --mute: #8fa2b3; --accent: #f0a53a;
+  --f-ui: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif; --f-data: "IBM Plex Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 14px; overflow: hidden; }
+#app { position: relative; height: 100%; }
+#cv { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+#panel { position: absolute; top: 12px; left: 12px; bottom: 12px; width: 290px; background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border: 1px solid var(--line); border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; }
+#panel header { padding: 12px 14px 10px; border-bottom: 1px solid var(--line); }
+#panel h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: .02em; text-wrap: balance; }
+#panel .sub { margin-top: 3px; color: var(--mute); font-size: 12px; }
+#scroll { overflow-y: auto; padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 14px; }
+.grp h2 { margin: 0 0 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .09em; color: var(--mute); }
+.row { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; }
+.row input { accent-color: var(--accent); margin: 0; }
+.sw { width: 18px; height: 5px; border-radius: 2px; flex: none; }
+.row span.t { flex: 1; min-width: 0; }
+.views { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+button { font: inherit; color: var(--fg); background: #22303d; border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+#info { position: absolute; right: 12px; top: 12px; max-width: min(340px, calc(100% - 24px)); background: var(--panel); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; font-size: 13px; line-height: 1.45; }
+#info b { font-family: var(--f-data); font-weight: 500; color: var(--accent); }
+#info .m { color: var(--mute); font-size: 12px; }
+.note { color: var(--mute); font-size: 12px; line-height: 1.45; }
+.data { font-family: var(--f-data); font-variant-numeric: tabular-nums; font-size: 12px; }
+#toggle { display: none; position: absolute; left: 12px; bottom: 12px; z-index: 3; }
+#load { position: absolute; inset: 0; display: grid; place-items: center; color: var(--mute); pointer-events: none; }
+#load[hidden] { display: none; }
+@media (max-width: 720px) {
+  #panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 55%; border-radius: 10px 10px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px); }
+  #panel.closed { display: none; }
+  #toggle { display: block; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  #panel:not(.closed) ~ #toggle { bottom: calc(55% + 8px); }
+  #info { top: 8px; right: 8px; left: 8px; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div id="app">
+  <canvas id="cv"></canvas>
+  <div id="load">Cargando el modelo…</div>
+  <aside id="panel" class="closed-mobile">
+    <header>
+      <h1>Escalera semi cascada · v19</h1>
+      <div class="sub">Igual a las láminas E-01 a E-08 (01/10) · cotas en cm</div>
+    </header>
+    <div id="scroll">
+      <div class="grp">
+        <h2>Vistas</h2>
+        <div class="views">
+          <button id="v-iso" type="button">Isométrica</button>
+          <button id="v-hall" type="button">Desde el hall</button>
+          <button id="v-top" type="button">Planta</button>
+          <button id="v-below" type="button">Desde abajo</button>
+          <button id="v-land" type="button">Descanso</button>
+          <button id="v-arr" type="button">Llegada V1-15</button>
+        </div>
+      </div>
+      <div class="grp">
+        <h2>Hormigón</h2>
+        <div id="lay-conc"></div>
+        <label class="row" for="op"><span class="t">Transparencia del hormigón</span></label>
+        <input id="op" type="range" min="0" max="100" value="72">
+      </div>
+      <div class="grp">
+        <h2>Armadura</h2>
+        <div id="lay-bars"></div>
+      </div>
+      <div class="grp">
+        <h2>Textos</h2>
+        <label class="row"><input id="lbl" type="checkbox" checked><span class="t">Nombres de los elementos</span></label>
+      </div>
+      <p class="note">Tocá una barra o un elemento para ver qué es. Arrastrá para girar, dos dedos o rueda para acercar.<br>
+      Predimensionado CIRSOC 201 (H21, ADN 500): lo revisa y firma el ingeniero de la obra.</p>
+    </div>
+  </aside>
+  <button id="toggle" type="button">Capas</button>
+  <div id="info"><b>Tocá un elemento</b><div class="m">Se muestra acá qué es, la posición, el diámetro y el largo.</div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script>
+(function () {
+// ============================================================ geometría (cm)
+// x = desde la cara del muro lindero hacia el hall (este); s = al norte del frente terminado del descanso; z = sobre el encadenado
+const H = 350 / 19, zs = k => 3 + k * H, Z10 = zs(10), SOF = Z10 - 15, S = 0.01;
+const P = (x, s, z) => new THREE.Vector3(x * S, z * S, -s * S);
+const nose1 = k => (k - 1) * 27 + 1.5, u2s = u => 243 - u;         // tramo 1: u = al sur del frente de E1
+const nz = j => 27 * (j - 1), zt = j => zs(10 + j);                  // tramo 2: pisada 10+j
+const EPX = [22.5, 32.5, 42.5, 52.5, 62.5, 72.5], ECX = [27.5, 37.5, 47.5, 57.5, 67.5, 77.5], ULX = [2.5, 12.5, 87.5, 97.5];
+
+const canvas = document.getElementById('cv');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#121a22');
+const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 100);
+const controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xe8f0ff, 0x2a2f36, 0.85));
+const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(3, 6, 4); scene.add(sun);
+
+const groups = {}, pickables = [];
+function G(key) { if (!groups[key]) { groups[key] = new THREE.Group(); scene.add(groups[key]); } return groups[key]; }
+const mats = {};
+function barMat(col) { return mats['b' + col] || (mats['b' + col] = new THREE.MeshStandardMaterial({ color: col, roughness: .45, metalness: .35 })); }
+const concMats = [];
+function concMat(col, extra) {
+  const m = new THREE.MeshStandardMaterial(Object.assign({ color: col, roughness: .9, transparent: true, opacity: .28, depthWrite: false }, extra || {}));
+  concMats.push(m); return m;
+}
+const M = {
+  pilar: concMat('#d9b48f'), nuevo: concMat('#c9d0d6'), exist: concMat('#7d8a96'), muro: concMat('#a0826d', { fixed: true }), diente: concMat('#ff8a9a'),
+  vigas: concMat('#e0a0a0'), fin: concMat('#d8c49a'), vidrio: concMat('#8fd3ff', { fixed: true })
+};
+M.muro.opacity = .12; M.vidrio.opacity = .18;
+
+function box(x0, x1, s0, s1, z0, z1, mat, key, info) {
+  const g = new THREE.BoxGeometry(Math.abs(x1 - x0) * S, Math.abs(z1 - z0) * S, Math.abs(s1 - s0) * S);
+  const m = new THREE.Mesh(g, mat); m.position.copy(P((x0 + x1) / 2, (s0 + s1) / 2, (z0 + z1) / 2));
+  m.userData.info = info; G(key).add(m);
+  const e = new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({ color: 0x9fb0c0, transparent: true, opacity: .35 }));
+  e.position.copy(m.position); G(key).add(e);
+  if (info) pickables.push(m);
+  return m;
+}
+function bar(pts, d, col, key, info) {      // pts: [[x, s, z], ...]; d = diámetro (cm)
+  // cada tramo recto es un cilindro exacto y cada quiebre lleva una esfera: los dobleces quedan a 90° (o al ángulo real), sin achaflanar
+  const r = Math.max(d, .6) / 2 * S, parts = [], Y = new THREE.Vector3(0, 1, 0);
+  const V = pts.map(p => P(...p));
+  for (let i = 0; i < V.length - 1; i++) {
+    const a = V[i], b = V[i + 1], dir = new THREE.Vector3().subVectors(b, a), len = dir.length();
+    if (len < 1e-6) continue;
+    const c = new THREE.CylinderGeometry(r, r, len, 8, 1, true);
+    c.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(Y, dir.normalize())));
+    c.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2); parts.push(c);
+    if (i > 0) { const sph = new THREE.SphereGeometry(r, 8, 6); sph.translate(a.x, a.y, a.z); parts.push(sph); }
+  }
+  const g = THREE.BufferGeometryUtils.mergeBufferGeometries(parts); g.userData = { isBar: true };
+  const m = new THREE.Mesh(g, barMat(col)); m.userData.info = info; m.userData.isBar = true; G(key).add(m); pickables.push(m);
+}
+function rr(a0, z0, a1, z1, r, n) {         // rectángulo redondeado en un plano (a, z)
+  n = n || 4; const pts = [];
+  [[a1 - r, z0 + r, -90], [a1 - r, z1 - r, 0], [a0 + r, z1 - r, 90], [a0 + r, z0 + r, 180]].forEach(([cx, cz, a]) => {
+    for (let i = 0; i <= n; i++) { const t = (a + 90 * i / n) * Math.PI / 180; pts.push([cx + r * Math.cos(t), cz + r * Math.sin(t)]); }
+  });
+  pts.push(pts[0]); return pts;
+}
+const inX = (x, list, map) => list.map(([a, z]) => [x, map ? map(a) : a, z]);
+function label(text, x, s, z, col) {
+  const c = document.createElement('canvas'), ctx = c.getContext('2d'); const fs = 44;
+  ctx.font = '600 ' + fs + 'px "IBM Plex Sans Condensed", Arial'; const w = ctx.measureText(text).width + 28;
+  c.width = w; c.height = fs + 22; ctx.font = '600 ' + fs + 'px "IBM Plex Sans Condensed", Arial';
+  ctx.fillStyle = 'rgba(18,26,34,.78)'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = col || '#f0a53a'; ctx.textBaseline = 'middle'; ctx.fillText(text, 14, c.height / 2);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
+  sp.scale.set(c.width / c.height * .11, .11, 1); sp.position.copy(P(x, s, z)); sp.renderOrder = 10; G('labels').add(sp);
+}
+
+// ============================================================ hormigón existente, muros y vidrio
+const Ex = (a, b, c, d, e, f, t) => box(a, b, c, d, e, f, M.exist, 'exist', t);
+const Pil = (a, b, c, d, t) => box(a, b, c, d, 0, 310, M.pilar, 'nuevo', t);
+Pil(-20, 0, -134, -104, 'P19 20×30 (NUEVO, se hace con la escalera) · 4 Ø12 + 2 Ø10 · estribos Ø6 16×26 · ver E-02');
+Pil(200, 220, -134, -104, 'P20 20×30 (NUEVO, se hace con la escalera) · 4 Ø12 + 2 Ø10 · estribos Ø6 16×26 · ver E-02');
+Pil(200, 230, 1, 21, 'P18 30×20 (NUEVO, se hace con la escalera) · 4 Ø12 + 2 Ø10 · estribos Ø6 16×26 · ver E-02');
+
+Ex(-20, 220, 216, 236, 310, 350, 'V1-15 20×40 (existente): 3 Ø16 abajo, 2 Ø16 arriba, 1 Ø12. Llegada del tramo 2');
+box(-20, 220, -124, -104, 310, 350, M.pilar, 'nuevo', 'V1-13 20×40 (se hace AHORA, después de los pilares) · armado según el ingeniero · baranda en PA a definir');
+box(200, 215, -104, 1, 310, 350, M.pilar, 'nuevo', 'V1-14 (se hace AHORA) · armado según el ingeniero · baranda en PA a definir');
+Ex(-20, 260, 236, 300, 333, 350, 'Losa de planta alta (existente)'); Ex(-20, 220, -170, -124, 333, 350, 'Losa de planta alta (existente)');
+box(-40, 260, -170, 300, -8, 0, M.exist, 'exist', 'Contrapiso ±0.00');
+box(-20, 0, -104, 216, 0, 310, M.muro, 'muros', 'Muro lindero (20 cm)'); box(200, 215, -104, 1, 0, 310, M.muro, 'muros', 'Muro del hall P20–P18 (15 cm)');
+box(0, 200, -134, -124, 0, 310, M.vidrio, 'muros', 'Vidrio fijo');
+
+// ============================================================ hormigón nuevo
+const Nw = (a, b, c, d, e, f, t, m) => box(a, b, c, d, e, f, m || M.nuevo, 'nuevo', t);
+// E1 en L y E2
+Nw(0, 200, 216, 243, 0, zs(1), 'E1 macizo (+0.234)'); Nw(127, 173, 189, 216, 0, zs(1), 'E1 macizo (hombro)'); Nw(173, 200, -124, 189, 0, zs(1), 'E1 macizo (pata junto al hall)');
+Nw(0, 127, 135, 216, 0, zs(2), 'E2 macizo (+0.418)');
+// tramo 1: pisadas 03-09 y contrahuellas 03-10
+for (let k = 3; k <= 9; k++) Nw(0, 100, u2s(nose1(k + 1) + 17), u2s(nose1(k)), zs(k) - 10, zs(k), 'Tramo 1 · pisada 0' + k + ' (losa de 10)');
+for (let k = 3; k <= 10; k++) {
+  const zb = k === 3 ? zs(2) : zs(k - 1) - 10, zt_ = k === 10 ? SOF : zs(k) - 10;
+  Nw(20, 80, u2s(nose1(k) + 17), u2s(nose1(k) + 5), zb, zt_, 'Tramo 1 · contrahuella ' + (k < 10 ? '0' : '') + k + ' (60 × 12, centrada)');
+}
+// descanso
+Nw(0, 200, -124, -18.5, SOF, Z10, 'DESCANSO 2.00 × 1.24, e = 15 cm (+1.892 terminado)');
+Nw(0, 100, -18.5, -1.5, Z10 - 10, Z10, 'Nariz del descanso, carril 1 (10 cm)'); Nw(100, 200, -18.5, -1.5, SOF, Z10, 'Descanso, carril 2 (15 cm hasta el borde)');
+Nw(120, 180, -1.5, 17, SOF, Z10, 'DIENTE 60 × 18.5 × 15: sostiene la contrahuella 11. Queda debajo de la pisada 11', M.diente);
+box(0, 200, -124, -104, Z10 - 30, SOF, M.vigas, 'nuevo', 'VD 20×30 (P19–P20), bajo la V1-13');
+box(-15, 0, -104, -38.5, Z10 - 30, Z10, M.vigas, 'nuevo', 'VL1 15×30, ENTERA dentro del muro lindero (Pd1 a P19)');
+box(200, 215, -104, 1, Z10 - 30, Z10, M.vigas, 'nuevo', 'VL2 15×30, ENTERA dentro del muro del hall (P20 a P18)');
+box(-15, 0, -38.5, -18.5, 0, Z10, M.vigas, 'nuevo', 'Pd1 15×20 dentro del muro lindero, hasta +1.872 (su cabeza recibe las 3 Ø16 y la VL1) · anclado con epoxi a la VF');
+// tramo 2
+for (let j = 1; j <= 8; j++) {
+  Nw(100, 200, nz(j), j < 8 ? nz(j + 1) + 17 : 216, zt(j) - 10, zt(j), 'Tramo 2 · pisada ' + (10 + j) + ' (losa de 10)');
+  Nw(120, 180, nz(j) + 5, nz(j) + 17, j === 1 ? Z10 : zt(j - 1) - 10, zt(j) - 10, 'Tramo 2 · contrahuella ' + (10 + j) + ' (60 × 12, centrada)');
+}
+// terminaciones (porcelanato 2 cm)
+const Fn = (a, b, c, d, z, t) => box(a, b, c, d, z, z + 2, M.fin, 'fin', t);
+for (let k = 3; k <= 9; k++) Fn(0, 100, u2s(nose1(k + 1) + 5), u2s(nose1(k) - 1.5), zs(k), 'Porcelanato pisada 0' + k);
+Fn(0, 200, -124, 0, Z10, 'Porcelanato del descanso (+1.892)');
+for (let j = 1; j <= 8; j++) Fn(100, 200, nz(j) - 1.5, j < 8 ? nz(j + 1) + 5 : 214.5, zt(j), 'Porcelanato pisada ' + (10 + j));
+
+// ============================================================ armadura
+const C = { ep: '#e0302a', ec: '#2f6bff', esq: '#d14fd1', ul: '#9aa3ab', pelo: '#ff8c1a', horq: '#23b04a', b16: '#f2f2f2', b10: '#3a8dff',
+  b11: '#8ec5ff', r10a: '#b8c0c8', r10b: '#35d06a', r10c: '#ff9a2e', b15: '#ff4fd8', u14: '#a07cff', b41: '#7be07b', viga: '#3a8dff', vest: '#ff6060', ex: '#8a939b', pil: '#c07a3a' };
+function ep(x, sOf, n, t, key, name, hook, col) {  // estribo de pisada 40×6; sOf(a) convierte la coordenada del plano en s
+  const a0 = n + 2.4, a1 = n + 2 + 40 - .4, z0 = t - 7.6, z1 = t - 2.4;
+  bar(inX(x, rr(a0, z0, a1, z1, 2), sOf), .8, col || C.ep, key, name);
+  if (hook) { bar([[x, sOf(a1 - 2), z1], [x, sOf(a1 - 7.3), z1 + 5.3]], .8, col || C.ep, key, name); bar([[x, sOf(a1), z1 - 2], [x, sOf(a1 - 5.3), z1 + 3.3]], .8, col || C.ep, key, name); }
+  return [a0, a1, z0, z1];
+}
+function ec(x, sOf, xf, zb, ztop, key, name) {
+  const a0 = xf + 2.4, a1 = xf + 9.6, z0 = zb + .4, z1 = ztop - .4;
+  bar(inX(x, rr(a0, z0, a1, z1, 2), sOf), .8, C.ec, key, name); bar([[x, sOf(a1 - 2), z1], [x, sOf(a1 - 6.5), z1 - 4.5]], .8, C.ec, key, name);
+  return [a0, a1, z0, z1];
+}
+function latStirrup(n, t, len) {   // estribo lateral cerrado 40×6: cierra en el lado de atrás, cola de 7.5 sobre la rama de abajo y otra sobre la de arriba
+  const a0 = n + 2.4, a1 = n + 2.4 + (len || 39.2), z0 = t - 7.6, z1 = t - 2.4, r = 1.6, o = .85;
+  return [[a1 - 7, z0 + o], [a1 - o, z0 + o], [a1 - o, z1 - r], [a1 - r, z1], [a0 + r, z1], [a0, z1 - r], [a0, z0 + r], [a0 + r, z0],
+          [a1 - r, z0], [a1, z0 + r], [a1, z1 - o], [a1 - 7, z1 - o]];
+}
+const cross = (x0, x1, s, z, col, key, name, d) => bar([[x0, s, z], [x1, s, z]], d || .8, col, key, name);
+
+// ---- tramo 1
+const T1 = 'bt1', id = a => a;
+for (let k = 3; k <= 9; k++) {
+  const n = nose1(k), t = zs(k);
+  EPX.forEach(x => ep(x, u2s, n, t, T1, 'pos. 1 · E-P de la pisada 0' + k + ' · Ø8 40×6 · L 1.08', true));
+  ULX.forEach(x => bar(inX(x, latStirrup(n, t), u2s), .8, C.ul, T1, 'pos. 38 · ESTRIBO CERRADO lateral Ø8 40×6 (igual que el E-P) · mismo largo y corte que el E-P (L 1.08) · cierra atrás con los 2 ganchos HACIA ADENTRO (colas de 7 cm sobre las ramas) · ata las 4 Ø8 de esquina'));
+  [[n + 3.55, t - 3.55], [n + 3.55, t - 6.45], [n + 38.45, t - 3.55], [n + 38.45, t - 6.45], [n + 8.25, t - 3.55], [n + 13.75, t - 3.55], [n + 35.25, t - 6.45]].forEach(([a, z]) => cross(2, 98, u2s(a), z, C.esq, T1, 'pos. 4 · Ø8 a lo ancho en la esquina (7 por escalón) · L 0.96'));
+}
+for (let k = 3; k <= 10; k++) {
+  const xf = nose1(k) + 5, zb = k > 3 ? zs(k - 1) - 8 : zs(2) + 2;
+  ECX.forEach(x => ec(x, u2s, xf, zb, zs(k) - 2, T1, (k === 3 ? 'pos. 2b · E-C corto de la contrahuella 03 (sobre E2) · 8×14.4 · L 0.60' : k === 10 ? 'pos. 2 · E-C de la contrahuella 10 (cuelga de la nariz del descanso)' : 'pos. 2 · E-C de la contrahuella ' + (k < 10 ? '0' : '') + k) + ' · Ø8'));
+}
+const ZP = zs(3) - 4.5, ZBp = zs(1) - 9;          // v19: entran 27 cm en E2
+[[26.5, 28.5]].concat([32.5, 42.5, 52.5, 62.5, 72.5].map(x => [x - 1, x + 1])).forEach(([xf, xb]) => {
+  bar(inX(xf, [[62.9 + 14, ZP], [62.9, ZP], [62.9, ZBp], [62.9 + 15, ZBp]], u2s), .8, C.pelo, T1, 'pos. 3 · pelo cara delantera de la contrahuella 03 · Ø8 15+43+14 · L 0.72 (al costado del E-P)');
+  bar(inX(xb, [[69.9 + 14, ZP], [69.9, ZP], [69.9, ZBp], [69.9 + 15, ZBp]], u2s), .8, '#c86a10', T1, 'pos. 3 · pelo cara trasera de la contrahuella 03 · Ø8 15+43+14 · L 0.72 (al costado del E-P)');
+});
+
+// ---- tramo 2
+const T2 = 'bt2', X2 = v => 100 + v;
+for (let j = 1; j <= 7; j++) {
+  const n = nz(j), t = zt(j);
+  EPX.forEach(x => ep(X2(x), id, n, t, T2, 'pos. 5 · E-P de la pisada ' + (10 + j) + ' · Ø8 40×6 · L 1.08', true));
+  ULX.forEach(x => bar(inX(X2(x), latStirrup(n, t)), .8, C.ul, T2, 'pos. 39 · ESTRIBO CERRADO lateral Ø8 40×6 (igual que el E-P) · mismo largo y corte que el E-P (L 1.08) · cierra atrás con los 2 ganchos HACIA ADENTRO (colas de 7 cm sobre las ramas) · ata las 4 Ø8 de esquina'));
+  [[n + 3.55, t - 3.55], [n + 3.55, t - 6.45], [n + 38.45, t - 3.55], [n + 38.45, t - 6.45], [n + 8.25, t - 3.55], [n + 13.75, t - 3.55], [n + 35.25, t - 6.45]].forEach(([a, z]) => cross(102, 198, a, z, C.esq, T2, 'pos. 8 · Ø8 a lo ancho en la esquina (7 por escalón) · L 0.96'));
+}
+for (let j = 2; j <= 8; j++) ECX.forEach(x => ec(X2(x), id, nz(j) + 5, zt(j - 1) - 8, zt(j) - 2, T2, 'pos. 6 · E-C de la contrahuella ' + (10 + j) + ' · Ø8 8×24.4'));
+ECX.forEach(x => ec(X2(x), id, 5, SOF + 2, zt(1) - 2, T2, 'pos. 40 · E-C de la contrahuella 11 · Ø8 8×29.5 · L 0.90: baja hasta el fondo del DIENTE'));
+// pisada 18: horquillas con epoxi en la V1-15
+const n8 = nz(8), t8 = zt(8), BEAM = 216;
+[12.5, 22.5, 32.5, 42.5, 52.5, 62.5, 72.5, 87.5].forEach(x => {
+  const pts = [[X2(x), BEAM + 15, t8 - 2.5]]; const cx = n8 + 5;
+  for (let a = 90; a <= 270; a += 15) { const r = a * Math.PI / 180; pts.push([X2(x), cx + 2.5 * Math.cos(r), t8 - 5 + 2.5 * Math.sin(r)]); }
+  pts.push([X2(x), BEAM + 15, t8 - 7.5]);
+  bar(pts, 1.0, C.horq, T2, 'pos. 7 · HORQUILLA Ø10 de la pisada 18 · 40×6 exterior (incluye las 2 patas de 15 cm con epoxi en la V1-15) · L 0.82');
+});
+[2.5, 97.5].forEach(x => bar(inX(X2(x), latStirrup(n8, t8, 23)), .8, C.ul, T2, 'pos. 39b · estribo cerrado corto Ø8 de la pisada 18 · 23 × 6 · ganchos hacia adentro · L 0.70'));
+[[n8 + 5.2, t8 - 3.4], [n8 + 5.2, t8 - 6.6]].forEach(([a, z]) => cross(102, 198, a, z, C.esq, T2, 'Ø8 a lo ancho dentro de las horquillas'));
+
+// ---- descanso (z local desde el fondo) – v19: patas de las barras E-O en el MEDIO de VL1/Pd1 y VL2 (x −7.5 / 207.5)
+const D = 'bdes', zl = v => SOF + v, XA = -7.5, XB = 207.5;
+[-23.5, -28.5, -33.5].forEach(s => bar([[XA, s, zl(2.8) - 13.2], [XA, s, zl(2.8)], [XB, s, zl(2.8)], [XB, s, zl(2.8) - 13.2]], 1.6, C.b16, D, 'pos. 13 · 3 Ø16 del BORDE (capa 1, abajo) · 14 + 216 + 14 = 2.44 · de la cabeza del Pd1 a la VL2 · patas en el medio de la viga'));
+[-42, -57, -72, -87, -102].forEach(s => bar([[XA, s, zl(2.5) - 11.5], [XA, s, zl(2.5)], [XB, s, zl(2.5)], [XB, s, zl(2.5) - 11.5]], 1.0, C.b10, D, 'pos. 9 · Ø10 c/15 E-O (capa 1, abajo) · 12 + 216 + 12 = 2.40 · patas en el medio de VL1 y VL2'));
+[-19, -34, -49, -64, -79, -94].forEach(s => bar([[XA, s, zl(11.0) - 8.6], [XA, s, zl(11.0)], [XB, s, zl(11.0)], [XB, s, zl(11.0) - 8.6]], .8, C.b11, D, 'pos. 11 · Ø8 c/15 E-O (capa 3, a 11.0 del fondo) · 9 + 216 + 9 = 2.34 · pasa por DENTRO de los estribos y por debajo de las barras de arriba de las VL'));
+const ZB = 4, ZU = 12.6, SV = -121;
+function ring(x, sN, tail, col, name) {
+  const p = [[x, tail != null ? tail : sN, zl(ZU)], [x, SV, zl(ZU)], [x, SV, zl(ZB)], [x, sN, zl(ZB)], [x, sN, zl(ZU)], [x, sN - 5.3, zl(ZU) - 5.3]];
+  bar(p, .9, col, D, name);
+  if (tail == null) bar([[x, sN - 0.4, zl(ZU) - 0.4], [x, sN - 5.7, zl(ZU) - 5.7 + 1.0]], .9, col, D, name);
+}
+[7.5, 20, 35, 50, 65, 80, 95].forEach(x => ring(x, -20.5, -4.5, C.r10a, 'pos. 10a · ESTRIBO CERRADO N-S Ø8 (carril 1) · 9.4 × 101 + cola de 16 hasta la nariz · L 2.45 · en 7.5 – 20 – 35 – 50 – 65 – 80 – 95 (entre las U pos. 14 y los E-C)'));
+[107.5, 192.5].forEach(x => ring(x, -3.5, null, C.r10b, 'pos. 10b · ESTRIBO CERRADO N-S Ø8 (carril 2, costados del diente) · 9.4 × 118 · 2 ganchos de 7.5 · L 2.70'));
+[122.5, 132.5, 142.5, 152.5, 162.5, 172.5].forEach(x => ring(x, 14, null, C.r10c, 'pos. 10c · ESTRIBO CERRADO N-S Ø8 (carril 2) hasta el final del DIENTE · 9.4 × 136 · 2 ganchos de 7.5 · L 3.06'));
+[[zl(4.8), 'de abajo'], [zl(11.0), 'de arriba, a 11.0 (recta, pasa por debajo de las barras de arriba de la VL2)']].forEach(([z, t]) => bar([[100, -4.3, z], [XB, -4.3, z], [XB, -4.3, z - 8.6]], .8, C.b15, D, 'pos. 15b · Ø8 E-O en el borde del carril 2, ' + t + ' · 108 + 9 · L 1.17'));
+for (let i = 0; i < 10; i++) { const x = 2.5 + 10 * i;
+  bar([[x, -53.9, Z10 - 2.4], [x, -5.9, Z10 - 2.4], [x, -3.9, Z10 - 5.0], [x, -5.9, Z10 - 7.6], [x, -53.9, Z10 - 7.6]], .8, C.u14, D, 'pos. 14 · U Ø8 de la nariz del carril 1 (rama de arriba a 12.6) · 50 + 6 + 50 · L 1.06 (en 2.5 – 12.5 … 92.5)'); }
+[Z10 - 3.2, Z10 - 6.8].forEach(z => cross(2, 98, -4.7, z, C.u14, D, 'pos. 15 · 2 Ø8 dentro de las U de la nariz · L 0.96'));
+[[8.55, zl(3.55)], [13.45, zl(3.55)], [2, zl(11.8)], [11, zl(11.8)]].forEach(([s, z]) => cross(122, 178, s, z, C.b41, D, 'pos. 41 · Ø8 corta a lo ancho del DIENTE · L 0.56'));
+
+// ---- vigas nuevas: VD, VL1, VL2 (con gancho DENTRO de los pilares), Pd1 y pilares P18, P19, P20 (v19)
+const V = 'bvig', ZVB = Z10 - 30;
+function hooked(pts0, pts1, zb, up, info) {     // barra recta con gancho en las dos puntas: 12 abajo (hacia arriba), 11 arriba (hacia abajo)
+  const dz = up ? 11 : -10;
+  bar([[...pts0, zb + dz], [...pts0, zb], [...pts1, zb], [...pts1, zb + dz]].map(p => p), 1.0, C.viga, V, info);
+}
+// VD: 3 Ø10 abajo (16a) y 2 Ø10 arriba (16b); estribo 14.5×25 (2 cm del lado del vidrio, 3.5 del lado del descanso)
+[-120.9, -114.75, -108.6].forEach(s => bar([[-16.5, s, ZVB + 3.1 + 11], [-16.5, s, ZVB + 3.1], [216.5, s, ZVB + 3.1], [216.5, s, ZVB + 3.1 + 11]], 1.0, C.viga, V, 'pos. 16a · VD · 3 Ø10 abajo · 12 + 234 + 12 = 2.58 · gancho dentro de P19 y P20 (hasta 3 cm de su cara de atrás)'));
+[-120.9, -108.6].forEach(s => bar([[-16.5, s, Z10 - 4.1 - 10], [-16.5, s, Z10 - 4.1], [216.5, s, Z10 - 4.1], [216.5, s, Z10 - 4.1 - 10]], 1.0, C.viga, V, 'pos. 16b · VD · 2 Ø10 arriba · 11 + 234 + 11 = 2.56 · la del norte pasa RECTA al costado de la barra de esquina del pilar'));
+for (let k = 0; k < 15; k++) { const x = 5 + k * 190 / 14;
+  bar(inX(x, rr(-121.7, ZVB + 2.3, -107.8, Z10 - 3.3, 1.2, 2)), .6, C.vest, V, 'pos. 18 · VD · estribo Ø6 14.5×25 c/13.5 · L 0.97'); }
+// VL1: de P19 a la cabeza del Pd1; VL2: de P20 a P18
+[-10.4, -4.6].forEach(x => {
+  bar([[x, -130.5, ZVB + 4.1 + 11], [x, -130.5, ZVB + 4.1], [x, -22, ZVB + 4.1], [x, -22, ZVB + 4.1 + 11]], 1.0, C.viga, V, 'pos. 19a · VL1 · 2 Ø10 abajo · 12 + 110 + 12 = 1.34 · de P19 a la cabeza del Pd1');
+  bar([[x, -130.5, Z10 - 3.1 - 10], [x, -130.5, Z10 - 3.1], [x, -22, Z10 - 3.1], [x, -22, Z10 - 3.1 - 10]], 1.0, C.viga, V, 'pos. 19b · VL1 · 2 Ø10 arriba · 11 + 110 + 11 = 1.32');
+});
+for (let k = 0; k < 5; k++) { const s = -104 + 7.5 + 14 * k;
+  bar(rr(-11.2, ZVB + 3.3, -3.8, Z10 - 2.3, 1.2, 2).map(([a, z]) => [a, s, z]), .6, C.vest, V, 'pos. 22 · VL1 · estribo Ø6 8×25 c/14 (el primero a 7.5 de P19) · L 0.82'); }
+[204.6, 210.4].forEach(x => {
+  bar([[x, -130.5, ZVB + 4.1 + 11], [x, -130.5, ZVB + 4.1], [x, 17.5, ZVB + 4.1], [x, 17.5, ZVB + 4.1 + 11]], 1.0, C.viga, V, 'pos. 21a · VL2 · 2 Ø10 abajo · 12 + 149 + 12 = 1.73 · de P20 a P18');
+  bar([[x, -130.5, Z10 - 3.1 - 10], [x, -130.5, Z10 - 3.1], [x, 17.5, Z10 - 3.1], [x, 17.5, Z10 - 3.1 - 10]], 1.0, C.viga, V, 'pos. 21b · VL2 · 2 Ø10 arriba · 11 + 149 + 11 = 1.71');
+});
+for (let k = 0; k < 10; k++) { const s = 1 - 7 - k * 95 / 9;
+  bar(rr(203.8, ZVB + 3.3, 211.2, Z10 - 2.3, 1.2, 2).map(([a, z]) => [a, s, z]), .6, C.vest, V, 'pos. 23 · VL2 · estribo Ø6 8×25 c/10.5 (el primero a 7 de P18) · L 0.82'); }
+// Pd1: 4 Ø10 verticales (pos. 24) hasta +1.84 + 4 Ø10 con epoxi en la VF (pos. 25) + estribos 11×16 (pos. 26)
+[[-11.9, -35.4], [-3.1, -35.4], [-11.9, -21.6], [-3.1, -21.6]].forEach(([x, s]) => bar([[x, s, 2], [x, s, 184]], 1.0, C.viga, V, 'pos. 24 · Pd1 · 4 Ø10 verticales · L 1.82 (hasta +1.84)'));
+[[-10.9, -34.4], [-4.1, -34.4], [-10.9, -22.6], [-4.1, -22.6]].forEach(([x, s]) => bar([[x, s, -15], [x, s, 40]], 1.0, C.viga, V, 'pos. 25 · Pd1 · 4 Ø10 con epoxi en la VF (perforar Ø14 × 15) · suben 40 cm · L 0.55'));
+[5, 15, 25, 35, 50, 65, 80, 95, 110, 125, 140, 155, 164, 173, 181].forEach(z => bar(rr(-12.7, -36.2, -2.3, -20.8, 1.2, 2).map(([x, s]) => [x, s, z]), .6, C.vest, V, 'pos. 26 · Pd1 · estribo Ø6 11×16 · L 0.70'));
+// pilares P19, P20 (20×30) y P18 (30×20): 4 Ø12 en las esquinas + 2 Ø10 en el centro de las caras de 30, estribos Ø6 16×26
+const PL = 'bpil', STZ = [5, 25, 45, 65, 85, 105, 125, 135, 145, 155, 165, 175, 185, 195, 205, 215, 235, 255, 275, 285, 295, 305, 315, 325, 335, 345];
+function pilar(x0, s0, wx, ws, mids, nm) {
+  [[3.2, 3.2], [wx - 3.2, 3.2], [3.2, ws - 3.2], [wx - 3.2, ws - 3.2]].forEach(([a, b]) => {
+    bar([[x0 + a, s0 + b, 2], [x0 + a, s0 + b, 347], [x0 + wx / 2, s0 + b, 347]], 1.2, C.pil, PL, 'pos. 50 · ' + nm + ' · Ø12 de esquina · de la base a la V1 + gancho 12 · L 3.60');
+    bar([[x0 + a + .9, s0 + b + .9, -35], [x0 + a + .9, s0 + b + .9, 55]], 1.2, C.ex, 'bex', 'Pelo existente de la base de ' + nm + ' · empalme ≥ 50 cm');
+  });
+  mids.forEach(([a, b]) => bar([[x0 + a, s0 + b, 2], [x0 + a, s0 + b, 347]], 1.0, C.pil, PL, 'pos. 51 · ' + nm + ' · Ø10 en el centro de la cara de 30 · L 3.60'));
+  STZ.forEach(z => bar(rr(x0 + 2.3, s0 + 2.3, x0 + wx - 2.3, s0 + ws - 2.3, 1.2, 2).map(([x, s]) => [x, s, z]), .6, C.vest, PL, 'pos. 52 · ' + nm + ' · estribo Ø6 16×26 · c/20, c/10 en los nudos · L 0.98'));
+}
+pilar(-20, -134, 20, 30, [[3.1, 15], [16.9, 15]], 'P19');
+pilar(200, -134, 20, 30, [[3.1, 15], [16.9, 15]], 'P20');
+pilar(200, 1, 30, 20, [[15, 3.1], [15, 16.9]], 'P18');
+// E1 y E2 (lámina E-07): estribos rojos, barras azules
+const E12 = 'be12', zE1 = zs(1), zE2 = zs(2);
+for (let i = 0; i < 8; i++) { const x = 7.5 + 15 * i;
+  bar(inX(x, rr(219.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 27 · E1 · estribo Ø8 20×6 c/15 (frente) · L 0.67'); }
+[135, 150, 165].forEach(x => bar(inX(x, rr(192.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28 · E1 · estribo Ø8 47×6 (frente + hombro) · L 1.21'));
+for (let s = 235.5; s > -121; s -= 15) bar(rr(176.9, zE1 - 9.6, 196.1, zE1 - 2.4, 1.2, 2).map(([x, z]) => [x, s, z]), .8, C.ep, E12, 'pos. 27 · E1 · estribo Ø8 20×6 c/15 (pata) · L 0.67');
+[[239.1 - .85, zE1 - 3.25], [239.1 - .85, zE1 - 8.75], [219.9 + .85, zE1 - 3.25], [219.9 + .85, zE1 - 8.75]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 en las narices · L 1.95'));
+[[225.3, 2.9], [233.7, 2.9]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 abajo del cuerpo · L 1.95'));
+[[177.75, zE1 - 3.25], [177.75, zE1 - 8.75], [195.25, zE1 - 3.25], [195.25, zE1 - 8.75], [181.9, 2.9], [191.1, 2.9]].forEach(([x, z]) => bar([[x, 241, z], [x, -121, z]], .8, C.b10, E12, 'pos. 30 · E1 pata · Ø8 · L 3.62'));
+[[zE1 - 3.25], [zE1 - 8.75]].forEach(([z]) => cross(125, 175, 193.75, z, C.b10, E12, 'pos. 31 · E1 · Ø8 en la nariz del hombro · L 0.50'));
+for (let x = 15; x < 120; x += 30) bar(inX(x, rr(224.5, 2, 234.5, zE1 - 10.5, 1.2, 2)), .6, C.vest, E12, 'pos. 32 · E1 · estribo Ø6 10×17 c/30 (cuerpo) · L 0.64');
+for (let i = 0; i < 6; i++) cross(3.5, 123.5, 210 - 13.8 * i, zE2 - 3.6, C.b10, E12, 'pos. 33 · E2 · malla sup. Ø6 c/15 E-O · L 1.20');
+for (let i = 0; i < 9; i++) bar([[6 + 14.4 * i, 212.5, zE2 - 3.0], [6 + 14.4 * i, 138.5, zE2 - 3.0]], .6, C.b10, E12, 'pos. 34 · E2 · malla sup. Ø6 c/15 N-S · L 0.74');
+for (let i = 0; i < 8; i++) { const x = 11 + 15 * i;
+  bar([[x, 184.5, zE2 - 2.4], [x, 212.1, zE2 - 2.4], [x, 212.1, zE2 - 7.6], [x, 184.5, zE2 - 7.6]], .8, C.ep, E12, 'pos. 35 · E2 · U Ø8 c/15 nariz N · L 0.90');
+  bar([[x, 168.9, zE2 - 2.4], [x, 138.9, zE2 - 2.4], [x, 138.9, zE2 - 7.6], [x, 168.9, zE2 - 7.6]], .8, C.ep, E12, 'pos. 35 · E2 · U Ø8 c/15 nariz S · L 0.90'); }
+[210.9, 195.9, 180.9, 165.9, 150.9].forEach(s => bar([[95.5, s, zE2 - 2.4], [123.1, s, zE2 - 2.4], [123.1, s, zE2 - 7.6], [95.5, s, zE2 - 7.6]], .8, C.ep, E12, 'pos. 35 · E2 · U Ø8 c/15 nariz E · L 0.90'));
+[[211.3, zE2 - 3.25], [211.3, zE2 - 6.75], [139.7, zE2 - 3.25], [139.7, zE2 - 6.75]].forEach(([s, z]) => cross(2, 124, s, z, C.b10, E12, 'pos. 36 · E2 · Ø8 esquinas narices N y S · L 1.22'));
+[[zE2 - 3.25], [zE2 - 6.75]].forEach(([z]) => bar([[122.3, 214, z], [122.3, 137, z]], .8, C.b10, E12, 'pos. 37 · E2 · Ø8 esquinas nariz E · L 0.76'));
+// existentes en la V1-15
+const E = 'bex';
+[4.4, 10, 15.6].forEach(o => bar([[-20, 216 + o, 314.4], [220, 216 + o, 314.4]], 1.6, C.ex, E, 'V1-15 · 3 Ø16 inferiores (existentes)'));
+[4.4, 15.6].forEach(o => bar([[-20, 216 + o, 345.6], [220, 216 + o, 345.6]], 1.6, C.ex, E, 'V1-15 · 2 Ø16 superiores (existentes)'));
+bar([[-20, 226, 318.4], [220, 226, 318.4]], 1.2, C.ex, E, 'V1-15 · 1 Ø12 (existente, posición a confirmar)');
+
+// ============================================================ nombres
+label('DESCANSO +1.892', 60, -70, Z10 + 12); label('DIENTE', 150, 8, SOF - 12, '#ff8a9a');
+label('TRAMO 1', 50, 120, zs(6) + 14); label('TRAMO 2', 150, 110, zt(4) + 16);
+label('VD 20×30', 100, -114, Z10 - 38, '#ff9d9d'); label('VL1', -8, -70, Z10 - 38, '#ff9d9d'); label('VL2', 208, -50, Z10 - 38, '#ff9d9d');
+label('Pd1', -8, -28, 60, '#ff9d9d'); label('P19', -10, -119, 240, '#e0b890'); label('P20', 210, -119, 240, '#e0b890'); label('P18', 215, 11, 240, '#e0b890');
+label('V1-15', 100, 226, 362, '#c0ccd6'); label('V1-14', 208, -50, 362, '#e0b890'); label('V1-13', 100, -114, 362, '#e0b890'); label('E1', 100, 229, 30, '#c0ccd6'); label('E2', 60, 175, 50, '#c0ccd6');
+label('horquillas Ø10 + epoxi', 150, 195, t8 + 12, '#23b04a');
+
+// ============================================================ capas (panel)
+const LAYERS_C = [['exist', 'Existente: V1-15, losas, contrapiso', '#7d8a96', true], ['muros', 'Muros y vidrio', '#a0826d', true],
+  ['nuevo', 'Hormigón nuevo (tramos, descanso, vigas, pilares, V1-13, V1-14)', '#c9d0d6', true], ['fin', 'Porcelanato', '#d8c49a', false]];
+const LAYERS_B = [['bt1', 'Tramo 1: E-P, E-C, pelos', C.ep, true], ['bt2', 'Tramo 2: E-P, E-C, horquillas', C.horq, true],
+  ['bdes', 'Parrilla del descanso', C.r10c, true], ['bvig', 'VD, VL1, VL2, Pd1', C.viga, true], ['bpil', 'Pilares P18, P19, P20 (nuevos)', C.pil, true],
+  ['be12', 'E1 y E2', C.ep, false], ['bex', 'Existentes: V1-15 y pelos de las bases', C.ex, false]];
+function makeRows(el, list) {
+  list.forEach(([key, text, col, on]) => {
+    const lab = document.createElement('label'); lab.className = 'row';
+    lab.innerHTML = '<input type="checkbox" id="lay-' + key + '"' + (on ? ' checked' : '') + '><span class="sw" style="background:' + col + '"></span><span class="t">' + text + '</span>';
+    el.appendChild(lab); const cb = lab.querySelector('input'); G(key).visible = on;
+    cb.addEventListener('change', () => { G(key).visible = cb.checked; });
+  });
+}
+makeRows(document.getElementById('lay-conc'), LAYERS_C); makeRows(document.getElementById('lay-bars'), LAYERS_B);
+const op = document.getElementById('op');
+function setOp() { const v = 1 - op.value / 100; concMats.forEach(m => { if (!m.fixed) m.opacity = Math.max(.04, Math.min(1, v)); m.depthWrite = m.opacity > .95; }); M.diente.opacity = Math.max(.25, M.nuevo.opacity); }
+op.addEventListener('input', setOp); setOp();
+document.getElementById('lbl').addEventListener('change', e => { G('labels').visible = e.target.checked; });
+
+// ============================================================ vistas
+const VIEWS = {
+  'v-iso': [[5.4, 6.2, 4.6], [1.0, 1.7, -0.5]], 'v-hall': [[5.2, 2.6, 0.1], [1.0, 2.0, -0.6]], 'v-top': [[1.0, 8.2, -0.55], [1.0, 1.5, -0.56]],
+  'v-below': [[3.2, -0.6, 2.2], [1.0, 1.7, 0.2]], 'v-land': [[3.6, 3.5, 2.4], [1.0, 1.75, 0.5]], 'v-arr': [[3.0, 4.2, -3.8], [1.5, 3.2, -2.0]]
+};
+function go(v) { const [p, t] = VIEWS[v]; camera.position.set(...p); controls.target.set(...t); controls.update(); }
+Object.keys(VIEWS).forEach(k => document.getElementById(k).addEventListener('click', () => go(k)));
+go('v-iso');
+
+// ============================================================ selección
+const info = document.getElementById('info'), ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+let sel = null, selMat = null, down = null;
+canvas.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+canvas.addEventListener('pointerup', e => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  const r = canvas.getBoundingClientRect(); mouse.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const hits = ray.intersectObjects(pickables.filter(o => o.parent.visible), false);
+  const bars = hits.filter(h => h.object.userData.isBar); const h = bars[0] || hits[0];
+  if (sel) { sel.material = selMat; sel = null; }
+  if (!h) { info.innerHTML = '<b>Tocá un elemento</b><div class="m">Nada seleccionado.</div>'; return; }
+  sel = h.object; selMat = sel.material;
+  sel.material = new THREE.MeshStandardMaterial({ color: '#ffe14d', emissive: '#6b5a00', transparent: selMat.transparent, opacity: Math.max(selMat.opacity, .6) });
+  const txt = sel.userData.info || ''; const parts = txt.split(' · ');
+  info.innerHTML = '<b>' + parts[0] + '</b><div>' + parts.slice(1).join('<br>') + '</div>';
+});
+
+// ============================================================ render
+function size() { const w = canvas.clientWidth, h = canvas.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+window.addEventListener('resize', size); size();
+document.getElementById('load').hidden = true;
+const panel = document.getElementById('panel'), tg = document.getElementById('toggle');
+if (window.matchMedia('(max-width: 720px)').matches) panel.classList.add('closed');
+tg.addEventListener('click', () => panel.classList.toggle('closed'));
+(function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+})();
+</script>

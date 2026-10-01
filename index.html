@@ -353,9 +353,13 @@ pilar(200, -134, 20, 30, [[3.1, 15], [16.9, 15]], 'P20');
 pilar(200, 1, 30, 20, [[15, 3.1], [15, 16.9]], 'P18');
 // E1 y E2 (lámina E-07): estribos rojos, barras azules
 const E12 = 'be12', zE1 = zs(1), zE2 = zs(2);
-// pos. 28 corre completo de oeste a este (c/15, x = 7.5 … 157.5): toma el frente, entra 23 cm en el macizo de E2 y en el hombro llega a su borde → enlaza E1 con E2
-for (let i = 0; i < 11; i++) { const x = 7.5 + 15 * i;
-  bar(inX(x, rr(192.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28 · E1 · estribo Ø8 47×6 c/15 de oeste a este (11 u., x = 7.5 a 157.5) · L 1.21 · enlaza E1 con E2: entra 23 cm en el macizo de E2 y en el hombro toma todo el ancho'); }
+// pos. 28 corre completo de oeste a este (c/15, x = 7.5 … 157.5). Frente a E2 hace de E-P como en los escalones: termina contra el E-C de enlace (pos. 42); en el hombro toma todo el ancho
+for (let i = 0; i < 11; i++) { const x = 7.5 + 15 * i, hombro = x > 120;
+  bar(inX(x, rr(hombro ? 192.9 : 201.4, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, hombro
+    ? 'pos. 28 · E1 · estribo Ø8 47×6 (frente + hombro) · L 1.21 · 3 u. en x = 127.5 / 142.5 / 157.5'
+    : 'pos. 28 · E1 · estribo Ø8 38.5×6 c/15 (frente, como el E-P de los escalones) · termina contra el E-C de enlace pos. 42 de E2 · L ≈ 1.04 · 8 u., x = 7.5 a 112.5'); }
+// Ø8 a lo ancho en el fondo del pos. 28, dentro del pie del pos. 42: atan los dos estribos (como las Ø8 de esquina de los escalones)
+[zE1 - 8.75, zE1 - 3.25].forEach(z => cross(2, 124, 202.25, z, C.b10, E12, 'pos. 43 · ENLACE E1–E2 · Ø8 a lo ancho en el fondo del pos. 28, dentro del pie del pos. 42 · L 1.22 · 2 u.'));
 for (let s = 235.5; s > -121; s -= 15) bar(rr(176.9, zE1 - 9.6, 196.1, zE1 - 2.4, 1.2, 2).map(([x, z]) => [x, s, z]), .8, C.ep, E12, 'pos. 27 · E1 · estribo Ø8 20×6 c/15 (pata) · L 0.67');
 [[239.1 - .85, zE1 - 3.25], [239.1 - .85, zE1 - 8.75], [219.9 + .85, zE1 - 3.25], [219.9 + .85, zE1 - 8.75]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 en las narices · L 1.95'));
 [[225.3, 2.9], [233.7, 2.9]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 abajo del cuerpo · L 1.95'));

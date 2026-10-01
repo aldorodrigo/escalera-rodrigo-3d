@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Escalera Rodrigo 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -187,7 +189,11 @@ box(0, 200, -134, -124, 0, 310, M.vidrio, 'muros', 'Vidrio fijo');
 // ============================================================ hormigón nuevo
 const Nw = (a, b, c, d, e, f, t, m) => box(a, b, c, d, e, f, m || M.nuevo, 'nuevo', t);
 // E1 en L y E2
-Nw(0, 200, 216, 243, 0, zs(1), 'E1 macizo (+0.234)'); Nw(127, 173, 189, 216, 0, zs(1), 'E1 macizo (hombro)'); Nw(173, 200, -124, 189, 0, zs(1), 'E1 macizo (pata junto al hall)');
+// E1 (lámina E-07): tapa de 10 cm que forma la nariz (frente 200×27, hombro 46×27, pata 27 junto al hall) sobre un cuerpo de 14 cm centrado (retirado 6.5 de cada borde)
+const E1T = zs(1) - 10;
+Nw(0, 200, 216, 243, E1T, zs(1), 'E1 tapa de 10 cm (frente 2.00 × 0.27, nariz + LED) · tapa a +0.214 estructural, +0.234 terminado'); Nw(127, 173, 189, 216, E1T, zs(1), 'E1 tapa de 10 cm (hombro 0.46 × 0.27)'); Nw(173, 200, -124, 189, E1T, zs(1), 'E1 tapa de 10 cm (pata 0.27 junto al hall, 3.67 en total)');
+Nw(0, 127, 216, 236.5, 0, E1T, 'E1 cuerpo (frente): retirado 6.5 del borde, se une al macizo de E2'); Nw(127, 179.5, 195.5, 236.5, 0, E1T, 'E1 cuerpo (hombro)');
+Nw(179.5, 193.5, 222.5, 236.5, 0, E1T, 'E1 cuerpo (esquina del frente)'); Nw(179.5, 193.5, -117.5, 222.5, 0, E1T, 'E1 cuerpo de la pata: 14 cm de ancho, centrado bajo la tapa de 27');
 Nw(0, 127, 135, 216, 0, zs(2), 'E2 macizo (+0.418)');
 // tramo 1: pisadas 03-09 y contrahuellas 03-10
 for (let k = 3; k <= 9; k++) Nw(0, 100, u2s(nose1(k + 1) + 17), u2s(nose1(k)), zs(k) - 10, zs(k), 'Tramo 1 · pisada 0' + k + ' (losa de 10)');
@@ -373,7 +379,7 @@ const LAYERS_C = [['exist', 'Existente: V1-15, losas, contrapiso', '#7d8a96', tr
   ['nuevo', 'Hormigón nuevo (tramos, descanso, vigas, pilares, V1-13, V1-14)', '#c9d0d6', true], ['fin', 'Porcelanato', '#d8c49a', false]];
 const LAYERS_B = [['bt1', 'Tramo 1: E-P, E-C, pelos', C.ep, true], ['bt2', 'Tramo 2: E-P, E-C, horquillas', C.horq, true],
   ['bdes', 'Parrilla del descanso', C.r10c, true], ['bvig', 'VD, VL1, VL2, Pd1', C.viga, true], ['bpil', 'Pilares P18, P19, P20 (nuevos)', C.pil, true],
-  ['be12', 'E1 y E2', C.ep, false], ['bex', 'Existentes: V1-15 y pelos de las bases', C.ex, false]];
+  ['be12', 'E1 y E2', C.ep, true], ['bex', 'Existentes: V1-15 y pelos de las bases', C.ex, false]];
 function makeRows(el, list) {
   list.forEach(([key, text, col, on]) => {
     const lab = document.createElement('label'); lab.className = 'row';

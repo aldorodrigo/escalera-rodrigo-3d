@@ -191,10 +191,14 @@ const Nw = (a, b, c, d, e, f, t, m) => box(a, b, c, d, e, f, m || M.nuevo, 'nuev
 // E1 en L y E2
 // E1 (lámina E-07): tapa de 10 cm que forma la nariz (frente 200×27, hombro 46×27, pata 27 junto al hall) sobre un cuerpo de 14 cm centrado (retirado 6.5 de cada borde)
 const E1T = zs(1) - 10;
-Nw(0, 200, 216, 243, E1T, zs(1), 'E1 tapa de 10 cm (frente 2.00 × 0.27, nariz + LED) · tapa a +0.214 estructural, +0.234 terminado'); Nw(127, 173, 189, 216, E1T, zs(1), 'E1 tapa de 10 cm (hombro 0.46 × 0.27)'); Nw(173, 200, -124, 189, E1T, zs(1), 'E1 tapa de 10 cm (pata 0.27 junto al hall, 3.67 en total)');
+Nw(0, 200, 216, 243, E1T, zs(1), 'E1 tapa de 10 cm (frente 2.00 × 0.27, nariz + LED) · tapa a +0.214 estructural, +0.234 terminado'); Nw(127, 173, 189, 216, E1T, zs(1), 'E1 tapa de 10 cm (hombro 0.46 × 0.27)'); Nw(173, 200, -124, 216, E1T, zs(1), 'E1 tapa de 10 cm (pata 0.27 junto al hall, 3.67 en total)');
 Nw(0, 127, 216, 236.5, 0, E1T, 'E1 cuerpo (frente): retirado 6.5 del borde, se une al macizo de E2'); Nw(127, 179.5, 195.5, 236.5, 0, E1T, 'E1 cuerpo (hombro)');
 Nw(179.5, 193.5, 222.5, 236.5, 0, E1T, 'E1 cuerpo (esquina del frente)'); Nw(179.5, 193.5, -117.5, 222.5, 0, E1T, 'E1 cuerpo de la pata: 14 cm de ancho, centrado bajo la tapa de 27');
-Nw(0, 127, 135, 216, 0, zs(2), 'E2 macizo (+0.418)');
+// E2 (lámina E-07): tapa de 12 cm con nariz de 5 cm en N, E y S sobre el cuerpo macizo; por abajo (hasta +0.234) el cuerpo llega al E1
+const E2T = zs(2) - 12, NZ = 5;
+Nw(0, 127, 135, 216, E2T, zs(2), 'E2 tapa de 12 cm (+0.418): nariz de 5 cm en N, E y S + LED · 1.27 × 0.81', M.nuevo);
+Nw(0, 127 - NZ, 135 + NZ, 216 - NZ, 0, E2T, 'E2 cuerpo macizo (retirado 5 cm de la nariz en N, E y S)');
+Nw(0, 127, 216 - NZ, 216, 0, zs(1), 'Unión E1–E2 (cuerpo de E2 hasta el nivel de E1)'); Nw(127 - NZ, 127, 189, 216 - NZ, 0, zs(1), 'Unión E1–E2 (lado del hombro)');
 // tramo 1: pisadas 03-09 y contrahuellas 03-10
 for (let k = 3; k <= 9; k++) Nw(0, 100, u2s(nose1(k + 1) + 17), u2s(nose1(k)), zs(k) - 10, zs(k), 'Tramo 1 · pisada 0' + k + ' (losa de 10)');
 for (let k = 3; k <= 10; k++) {
@@ -343,9 +347,9 @@ pilar(200, -134, 20, 30, [[3.1, 15], [16.9, 15]], 'P20');
 pilar(200, 1, 30, 20, [[15, 3.1], [15, 16.9]], 'P18');
 // E1 y E2 (lámina E-07): estribos rojos, barras azules
 const E12 = 'be12', zE1 = zs(1), zE2 = zs(2);
-for (let i = 0; i < 8; i++) { const x = 7.5 + 15 * i;
-  bar(inX(x, rr(219.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 27 · E1 · estribo Ø8 20×6 c/15 (frente) · L 0.67'); }
-[135, 150, 165].forEach(x => bar(inX(x, rr(192.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28 · E1 · estribo Ø8 47×6 (frente + hombro) · L 1.21'));
+// pos. 28 corre completo de oeste a este (c/15, x = 7.5 … 157.5): toma el frente, entra 23 cm en el macizo de E2 y en el hombro llega a su borde → enlaza E1 con E2
+for (let i = 0; i < 11; i++) { const x = 7.5 + 15 * i;
+  bar(inX(x, rr(192.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28 · E1 · estribo Ø8 47×6 c/15 de oeste a este (11 u., x = 7.5 a 157.5) · L 1.21 · enlaza E1 con E2: entra 23 cm en el macizo de E2 y en el hombro toma todo el ancho'); }
 for (let s = 235.5; s > -121; s -= 15) bar(rr(176.9, zE1 - 9.6, 196.1, zE1 - 2.4, 1.2, 2).map(([x, z]) => [x, s, z]), .8, C.ep, E12, 'pos. 27 · E1 · estribo Ø8 20×6 c/15 (pata) · L 0.67');
 [[239.1 - .85, zE1 - 3.25], [239.1 - .85, zE1 - 8.75], [219.9 + .85, zE1 - 3.25], [219.9 + .85, zE1 - 8.75]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 en las narices · L 1.95'));
 [[225.3, 2.9], [233.7, 2.9]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 abajo del cuerpo · L 1.95'));

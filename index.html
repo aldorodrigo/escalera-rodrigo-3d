@@ -367,6 +367,8 @@ for (let i = 0; i < 8; i++) { const x = 11 + 15 * i;
 [210.9, 195.9, 180.9, 165.9, 150.9].forEach(s => bar([[95.5, s, zE2 - 2.4], [123.1, s, zE2 - 2.4], [123.1, s, zE2 - 7.6], [95.5, s, zE2 - 7.6]], .8, C.ep, E12, 'pos. 35 · E2 · U Ø8 c/15 nariz E · L 0.90'));
 [[211.3, zE2 - 3.25], [211.3, zE2 - 6.75], [139.7, zE2 - 3.25], [139.7, zE2 - 6.75]].forEach(([s, z]) => cross(2, 124, s, z, C.b10, E12, 'pos. 36 · E2 · Ø8 esquinas narices N y S · L 1.22'));
 [[zE2 - 3.25], [zE2 - 6.75]].forEach(([z]) => bar([[122.3, 214, z], [122.3, 137, z]], .8, C.b10, E12, 'pos. 37 · E2 · Ø8 esquinas nariz E · L 0.76'));
+// pos. 42: enlace E1–E2 igual que en los escalones: E-C en la cara N de E2 (5 cm detrás de la nariz), de la tapa de E1 hasta arriba de E2, alternado con los pos. 28 (que hacen de E-P de E1)
+for (let i = 0; i < 8; i++) ec(12.5 + 15 * i, a => 216 - a, 5, zE1 - 10, zE2 - 2, E12, 'pos. 42 · ENLACE E1–E2 · E-C Ø8 8×26.4 c/15 (como la contrahuella de los escalones) · de la tapa de E1 hasta arriba de E2 · L ≈ 0.80 · 8 u., x = 12.5 a 117.5');
 // existentes en la V1-15
 const E = 'bex';
 [4.4, 10, 15.6].forEach(o => bar([[-20, 216 + o, 314.4], [220, 216 + o, 314.4]], 1.6, C.ex, E, 'V1-15 · 3 Ø16 inferiores (existentes)'));

@@ -60,8 +60,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   <div id="load">Cargando el modelo…</div>
   <aside id="panel" class="closed-mobile">
     <header>
-      <h1>Escalera semi cascada · v21b</h1>
-      <div class="sub">Igual a las láminas E-01 a E-08 v21 (01/10), con cotas · cotas en cm</div>
+      <h1>Escalera semi cascada · v22</h1>
+      <div class="sub">Igual a las láminas E-01 a E-08 v22 (01/10) · cotas en cm</div>
     </header>
     <div id="scroll">
       <div class="grp">
@@ -74,9 +74,11 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
           <button id="v-land" type="button">Descanso</button>
           <button id="v-arr" type="button">Llegada V1-15</button>
           <button id="v-cot" type="button">Cotas llegada</button>
+          <button id="v-p19" type="button">Último escalón</button>
           <button id="v-cotd" type="button">Cotas descanso</button>
           <button id="v-cot1" type="button">Cotas tramo 1</button>
           <button id="v-cote" type="button">Cotas E1 y E2</button>
+          <button id="v-gente" type="button">Personas</button>
         </div>
       </div>
       <div class="grp">
@@ -94,7 +96,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         <label class="row"><input id="lbl" type="checkbox" checked><span class="t">Nombres de los elementos</span></label>
         <label class="row"><input id="cot" type="checkbox" checked><span class="sw" style="background:#5fd4ff"></span><span class="t">Cotas (cm)</span></label>
         <label class="row"><input id="num" type="checkbox" checked><span class="sw" style="background:#ffffff"></span><span class="t">Número de escalones</span></label>
-        <p class="note">19 alzadas de 18.42 cm. Tramo 1: 10 (01 E1, 02 E2, 03 a 09 y 10 = descanso). Tramo 2: 9 (11 a 18 y 19 = llegada a PA). 17 huellas de 27 + descanso.</p>
+        <p class="note">19 alzadas de 18.42 cm, todas iguales. Tramo 1: 10 (01 E1, 02 E2, 03 a 09 y 10 = descanso). Tramo 2: 9 (11 a 18 y 19 = pisada unida a la losa, con nariz). Huella 27 y nariz 5 en todos.</p>
         <label class="row" for="opt"><span class="t">Transparencia de los textos y cotas</span></label>
         <input id="opt" type="range" min="0" max="90" value="0">
       </div>
@@ -117,7 +119,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 const H = 350 / 19, zs = k => 3 + k * H, Z10 = zs(10), SOF = Z10 - 15, S = 0.01;
 const P = (x, s, z) => new THREE.Vector3(x * S, z * S, -s * S);
 const nose1 = k => (k - 1) * 27 + 1.5, u2s = u => 243 - u;         // tramo 1: u = al sur del frente de E1
-const nz = j => 27 * (j - 1), zt = j => zs(10 + j);                  // tramo 2: pisada 10+j
+const SH2 = 27;                                                      // v24 PRUEBA: tramo 2 corrido 27 cm al sur: la pisada 19 (27 cm) va unida a la losa de PA
+const nz = j => 27 * (j - 1) - SH2, zt = j => zs(10 + j);                  // tramo 2: pisada 10+j
 const EPX = [22.5, 32.5, 42.5, 52.5, 62.5, 72.5], ECX = [27.5, 37.5, 47.5, 57.5, 67.5, 77.5], ULX = [2.5, 12.5, 87.5, 97.5];
 
 const canvas = document.getElementById('cv');
@@ -222,27 +225,30 @@ Nw(0, 120.5, 141.5, 209.5, 0, E2T, 'E2 cuerpo macizo (5 cm detrás de la nariz e
 // tramo 1: pisadas 03-09 y contrahuellas 03-10
 for (let k = 3; k <= 9; k++) Nw(0, 100, u2s(nose1(k + 1) + 17), u2s(nose1(k)), zs(k) - 10, zs(k), 'Tramo 1 · pisada 0' + k + ' (losa de 10)');
 for (let k = 3; k <= 10; k++) {
-  const zb = k === 3 ? zs(2) : zs(k - 1) - 10, zt_ = k === 10 ? SOF : zs(k) - 10;
+  const zb = k === 3 ? zs(2) : zs(k - 1) - 10, zt_ = zs(k) - 10;                 // v24d: la contrahuella 10 llega al fondo de la NARIZ del descanso (antes quedaban 5 cm sin hormigón)
   Nw(20, 80, u2s(nose1(k) + 17), u2s(nose1(k) + 5), zb, zt_, 'Tramo 1 · contrahuella ' + (k < 10 ? '0' : '') + k + ' (60 × 12, centrada)');
 }
 // descanso
 Nw(0, 200, -124, -18.5, SOF, Z10, 'DESCANSO 2.00 × 1.24, e = 15 cm (+1.892 terminado)');
-Nw(0, 100, -18.5, -1.5, Z10 - 10, Z10, 'Nariz del descanso, carril 1 (10 cm)'); Nw(100, 200, -18.5, -1.5, SOF, Z10, 'Descanso, carril 2 (15 cm hasta el borde)');
-Nw(120, 180, -1.5, 17, SOF, Z10, 'DIENTE 60 × 18.5 × 15: sostiene la contrahuella 11. Queda debajo de la pisada 11', M.diente);
+Nw(0, 100, -18.5, -1.5, Z10 - 10, Z10, 'Nariz del descanso, carril 1 (10 cm)'); Nw(100, 200, -18.5, nz(1) + 17, SOF, Z10, 'Descanso, carril 2 (15 cm): termina en la cara de atrás de la contrahuella 11 (sin repisa bajo la pisada 11)');
 box(0, 200, -124, -104, Z10 - 30, SOF, M.vigas, 'nuevo', 'VD 20×30 (P19–P20), bajo la V1-13');
 box(-15, 0, -104, -38.5, Z10 - 30, Z10, M.vigas, 'nuevo', 'VL1 15×30, ENTERA dentro del muro lindero (Pd1 a P19)');
 box(200, 215, -104, 1, Z10 - 30, Z10, M.vigas, 'nuevo', 'VL2 15×30, ENTERA dentro del muro del hall (P20 a P18)');
 box(-15, 0, -38.5, -18.5, 0, Z10, M.vigas, 'nuevo', 'Pd1 15×20 dentro del muro lindero, hasta +1.872 (su cabeza recibe las 3 Ø16 y la VL1) · anclado con epoxi a la VF');
 // tramo 2
 for (let j = 1; j <= 8; j++) {
-  Nw(100, 200, nz(j), j < 8 ? nz(j + 1) + 17 : 216, zt(j) - 10, zt(j), 'Tramo 2 · pisada ' + (10 + j) + ' (losa de 10)');
+  Nw(100, 200, nz(j), nz(j + 1) + 17, zt(j) - 10, zt(j), 'Tramo 2 · pisada ' + (10 + j) + (j === 8 ? ' (losa de 10, igual a las demás: queda a 10 cm de la V1-15)' : ' (losa de 10)'));
   Nw(120, 180, nz(j) + 5, nz(j) + 17, j === 1 ? Z10 : zt(j - 1) - 10, zt(j) - 10, 'Tramo 2 · contrahuella ' + (10 + j) + ' (60 × 12, centrada)');
 }
+Nw(100, 200, nz(9), nz(9) + 5, 343, 353, 'PISADA 19 · NARIZ de 10 cm (de +3.43 a +3.53), igual a las demás: se ve 12 con el porcelanato y deja 6.4 para el LED · vuelo de 5');
+Nw(100, 200, nz(9) + 5, 216, 340, 353, 'PISADA 19 UNIDA A LA LOSA · cuerpo de 13 cm (de +3.40 a +3.53) contra la cara de la V1-15 (picar y limpiar) · adentro van los 10 pelos Ø10 existentes DERECHOS (quedan 20 cm) · lleva solo 2 cm de porcelanato (la carpeta de PA llega hasta acá): terminado +3.55 igual que PA · NIVELAR con cuidado · armadura: 10 estribos cerrados pos. 44 (18×9) + U de nariz pos. 47 + Ø8 pos. 45/47b · el hueco de 10 cm entre la pisada 18 y la viga se encofra con tabla y se RETIRA');
+Nw(120, 180, nz(9) + 5, nz(9) + 17, zt(8) - 10, 340, 'Tramo 2 · contrahuella 19 (60 × 12, centrada): de la pisada 18 a la pisada 19 unida a la losa');
 // terminaciones (porcelanato 2 cm)
 const Fn = (a, b, c, d, z, t) => box(a, b, c, d, z, z + 2, M.fin, 'fin', t);
 for (let k = 3; k <= 9; k++) Fn(0, 100, u2s(nose1(k + 1) + 5), u2s(nose1(k) - 1.5), zs(k), 'Porcelanato pisada 0' + k);
-Fn(0, 200, -124, 0, Z10, 'Porcelanato del descanso (+1.892)');
-for (let j = 1; j <= 8; j++) Fn(100, 200, nz(j) - 1.5, j < 8 ? nz(j + 1) + 5 : 214.5, zt(j), 'Porcelanato pisada ' + (10 + j));
+Fn(0, 100, -124, 0, Z10, 'Porcelanato del descanso (+1.892)'); Fn(100, 200, -124, nz(1) + 3.5, Z10, 'Porcelanato del descanso, carril 2 (+1.892) · 1.04 hasta el vidrio');
+for (let j = 1; j <= 8; j++) Fn(100, 200, nz(j) - 1.5, nz(j + 1) + 5, zt(j), 'Porcelanato pisada ' + (10 + j));
+box(100, 200, nz(9) - 1.5, 216, 353, 355, M.fin, 'fin', 'Porcelanato de la pisada 19 (2 cm, como los escalones): terminado +3.55, a nivel con el piso de PA (losa + 5 cm de carpeta y porcelanato)');
 
 // ============================================================ armadura
 const C = { ep: '#e0302a', ec: '#2f6bff', esq: '#d14fd1', ul: '#9aa3ab', pelo: '#ff8c1a', horq: '#23b04a', b16: '#f2f2f2', b10: '#3a8dff',
@@ -285,44 +291,59 @@ const ZP = zs(3) - 4.5, ZBp = zs(1) - 9;          // v19: entran 27 cm en E2
 
 // ---- tramo 2
 const T2 = 'bt2', X2 = v => 100 + v;
-for (let j = 1; j <= 7; j++) {
+for (let j = 1; j <= 8; j++) {
   const n = nz(j), t = zt(j);
   EPX.forEach(x => ep(X2(x), id, n, t, T2, 'pos. 5 · E-P de la pisada ' + (10 + j) + ' · Ø8 40×6 · L 1.08', true));
   ULX.forEach(x => bar(inX(X2(x), latStirrup(n, t)), .8, C.ul, T2, 'pos. 39 · ESTRIBO CERRADO lateral Ø8 40×6 (igual que el E-P) · mismo largo y corte que el E-P (L 1.08) · cierra atrás con los 2 ganchos HACIA ADENTRO (colas de 7 cm sobre las ramas) · ata las 4 Ø8 de esquina'));
   [[n + 3.55, t - 3.55], [n + 3.55, t - 6.45], [n + 38.45, t - 3.55], [n + 38.45, t - 6.45], [n + 8.25, t - 3.55], [n + 13.75, t - 3.55], [n + 35.25, t - 6.45]].forEach(([a, z]) => cross(102, 198, a, z, C.esq, T2, 'pos. 8 · Ø8 a lo ancho en la esquina (7 por escalón) · L 0.96'));
 }
-for (let j = 2; j <= 8; j++) ECX.forEach(x => ec(X2(x), id, nz(j) + 5, zt(j - 1) - 8, zt(j) - 2, T2, 'pos. 6 · E-C de la contrahuella ' + (10 + j) + ' · Ø8 8×24.4'));
-ECX.forEach(x => ec(X2(x), id, 5, SOF + 2, zt(1) - 2, T2, 'pos. 40 · E-C de la contrahuella 11 · Ø8 8×29.5 · L 0.90: baja hasta el fondo del DIENTE'));
-// pisada 18: horquillas con epoxi en la V1-15
-const n8 = nz(8), t8 = zt(8), BEAM = 216;
-[12.5, 22.5, 32.5, 42.5, 52.5, 62.5, 72.5, 87.5].forEach(x => {
-  const pts = [[X2(x), BEAM + 15, t8 - 2.5]]; const cx = n8 + 5;
-  for (let a = 90; a <= 270; a += 15) { const r = a * Math.PI / 180; pts.push([X2(x), cx + 2.5 * Math.cos(r), t8 - 5 + 2.5 * Math.sin(r)]); }
-  pts.push([X2(x), BEAM + 15, t8 - 7.5]);
-  bar(pts, 1.0, C.horq, T2, 'pos. 7 · HORQUILLA Ø10 de la pisada 18 · 40×6 exterior (incluye las 2 patas de 15 cm con epoxi en la V1-15) · L 0.82');
-});
-[2.5, 97.5].forEach(x => bar(inX(X2(x), latStirrup(n8, t8, 23)), .8, C.ul, T2, 'pos. 39b · estribo cerrado corto Ø8 de la pisada 18 · 23 × 6 · ganchos hacia adentro · L 0.70'));
-[[n8 + 5.2, t8 - 3.4], [n8 + 5.2, t8 - 6.6]].forEach(([a, z]) => cross(102, 198, a, z, C.esq, T2, 'pos. 8 · Ø8 a lo ancho dentro de las horquillas (pisada 18) · L 0.96'));
-
+for (let j = 2; j <= 9; j++) ECX.forEach(x => ec(X2(x), id, nz(j) + 5, zt(j - 1) - 8, j === 9 ? 351 : zt(j) - 2, T2, (j === 9 ? 'pos. 6 · E-C de la contrahuella 19 · Ø8 8×24.4 · L 0.80 · de la pisada 18 (abraza sus Ø8 de esquina) hasta arriba de la pisada 19 unida a la losa (abraza las 2 pos. 45) · 6 u.' : 'pos. 6 · E-C de la contrahuella ' + (10 + j) + ' · Ø8 8×24.4')));
+ECX.forEach(x => ec(X2(x), id, nz(1) + 5, SOF + 2, zt(1) - 2, T2, 'pos. 40 · E-C de la contrahuella 11 · Ø8 8×29.5 · L 0.90 · baja hasta el fondo del DESCANSO (ya no hay diente) y abraza las 2 Ø8 pos. 41'));
+[nz(1) + 9.4, nz(1) + 12.6].forEach(a => cross(122, 178, a, SOF + 3.2, C.b41, 'bdes', 'pos. 41 · 2 Ø8 a lo ancho ABAJO dentro de los E-C de la contrahuella 11 (pos. 40), en el fondo del descanso · L 0.56 · se cruzan (en contacto) con los estribos 10b'));
+// v24 PRUEBA: pisada 19 unida a la losa. Sin horquillas pos. 7 ni epoxi.
+// pelos existentes: 10 Ø10 a ≈ +3.45 (5 cm bajo el tope de la losa), 50 cm dentro y 40 cm afuera: quedan DERECHOS dentro de la pisada 19 y se cortan a 2.5 cm de la nariz
+const n8 = nz(8), t8 = zt(8), BEAM = 216, ZPE = 344.3, SPE = nz(9) + 7;
+for (let i = 0; i < 10; i++) { const x = 105 + 10 * i;
+  bar([[x, BEAM + 50, ZPE], [x, BEAM, ZPE]], 1.0, C.ex, 'bex', 'Pelo Ø10 existente (tramo dentro de la losa, ≈ 50 cm)');
+  bar([[x, BEAM, ZPE], [x, SPE, ZPE]], 1.0, C.horq, T2, 'PELO Ø10 EXISTENTE DERECHO · ' + (i + 1) + ' de 10 · queda ' + (BEAM - SPE).toFixed(1) + ' cm dentro de la pisada 19 unida a la losa · NO se dobla · posición real a medir en obra');
+  bar([[x, SPE - 1, ZPE], [x, BEAM - 40, ZPE]], 1.0, '#ff4040', T2, 'Parte del pelo que SE CORTA (≈ ' + (40 - (BEAM - SPE)).toFixed(1) + ' cm): termina 2 cm detrás de la nariz (la nariz recortada queda sin pelos)');
+}
+// v24b · ARMADURA DE LA PISADA 19 (unida a la losa), igual criterio que los peldaños:
+// v24e · pos. 44 = ESTRIBO CERRADO Ø8 18×9 en el CUERPO (de 2 cm detrás de la nariz a la cara de la V1-15), uno al costado (lado oeste) de cada pelo, atado al pelo;
+// cierra en la esquina de arriba contra la viga. Los pelos (z ≈ +3.443) quedan ENTRE las ramas. La nariz recortada lleva U pos. 47 entre los pelos.
+const n9 = nz(9), t9 = 353;
+const b0 = n9 + 7.4, b1 = 213.6, z0 = 342.4, z1 = t9 - 2.4, r = 1.6, o = .85;
+for (let i = 0; i < 10; i++) { const xx = 103.8 + 10 * i;
+  bar(inX(xx, [[b1 - 7, z1 - o], [b1 - o, z1 - o], [b1 - o, z0 + r], [b1 - r - o, z0], [b0 + r, z0], [b0, z0 + r], [b0, z1 - r], [b0 + r, z1], [b1 - r, z1], [b1, z1 - r], [b1, z1 - 4.5]]), .8, C.ep, T2,
+      'pos. 44 · PISADA 19 · ESTRIBO CERRADO Ø8 18×9 (cuerpo de 13) · ' + (i + 1) + ' de 10 · uno al costado (lado oeste) de cada pelo, atado al pelo · cierra en la esquina de ARRIBA contra la viga (cola de 7 por la rama de arriba + 4 bajando) · L 0.66'); }
+// pos. 47 = U Ø8 de la NARIZ (10 cm): cierra en la nariz y entra 22 cm en el cuerpo, por ENCIMA de los pelos; 9 u. entre pelo y estribo
+for (let i = 0; i < 9; i++) { const xx = 109.4 + 10 * i, zb = 345.4, zt9 = t9 - 2.4;
+  bar(inX(xx, [[b1, zt9], [n9 + 2.4, zt9], [n9 + 2.4, zb], [b1, zb]]), .8, C.u14, T2, 'pos. 47 · PISADA 19 · U Ø8 de la NARIZ · 23 + 6 + 23 · L 0.52 · 9 u. (entre cada pelo y el estribo siguiente) · la rama de abajo pasa por encima de los pelos'); }
+[[n9 + 3.55, 346.55], [n9 + 3.55, t9 - 3.55]].forEach(([a, z]) => cross(102, 198, a, z, C.u14, T2, 'pos. 47b · PISADA 19 · 2 Ø8 a lo ancho dentro de las U de la nariz · L 0.96'));
+// pos. 45 = Ø8 a lo ancho en el cuerpo: 4 en las esquinas del estribo + 2 arriba en las esquinas del E-C de la contrahuella 19. Las de abajo pasan POR DEBAJO de los pelos.
+[[b0 + 2.2, z1 - 1.0], [b0 + 2.0, 343.2], [b1 - 1.65, z1 - 1.65], [b1 - 2.8, 343.2], [n9 + 13.75, t9 - 3.55]].forEach(([a, z]) =>
+  cross(102, 198, a, z, C.esq, T2, 'pos. 45 · PISADA 19 · Ø8 a lo ancho (5: 4 en las esquinas del estribo pos. 44 + 1 en la esquina de atrás del E-C de la contrahuella 19; la de arriba adelante sirve a los dos) · L 0.96 · las de abajo pasan por debajo de los pelos'));
 // ---- descanso (z local desde el fondo) – v19: patas de las barras E-O en el MEDIO de VL1/Pd1 y VL2 (x −7.5 / 207.5)
 const D = 'bdes', zl = v => SOF + v, XA = -7.5, XB = 207.5;
 [-23.5, -28.5, -33.5].forEach(s => bar([[XA, s, zl(2.8) - 13.2], [XA, s, zl(2.8)], [XB, s, zl(2.8)], [XB, s, zl(2.8) - 13.2]], 1.6, C.b16, D, 'pos. 13 · 3 Ø16 del BORDE (capa 1, abajo) · 14 + 216 + 14 = 2.44 · de la cabeza del Pd1 a la VL2 · patas en el medio de la viga'));
 [-42, -57, -72, -87, -102].forEach(s => bar([[XA, s, zl(2.5) - 11.5], [XA, s, zl(2.5)], [XB, s, zl(2.5)], [XB, s, zl(2.5) - 11.5]], 1.0, C.b10, D, 'pos. 9 · Ø10 c/15 E-O (capa 1, abajo) · 12 + 216 + 12 = 2.40 · patas en el medio de VL1 y VL2'));
-[-19, -34, -49, -64, -79, -94].forEach(s => bar([[XA, s, zl(11.0) - 8.6], [XA, s, zl(11.0)], [XB, s, zl(11.0)], [XB, s, zl(11.0) - 8.6]], .8, C.b11, D, 'pos. 11 · Ø8 c/15 E-O (capa 3, a 11.0 del fondo) · 9 + 216 + 9 = 2.34 · pasa por DENTRO de los estribos y por debajo de las barras de arriba de las VL'));
-const ZB = 4, ZU = 12.6, SV = -121;
+[-18.8, -34.4, -49, -64, -79, -94].forEach(s => bar([[XA, s, zl(11.0) - 8.6], [XA, s, zl(11.0)], [XB, s, zl(11.0)], [XB, s, zl(11.0) - 8.6]], .8, C.b11, D, 'pos. 11 · Ø8 c/15 E-O (capa 3, a 11.0 del fondo) · 9 + 216 + 9 = 2.34 · pasa por DENTRO de los estribos y por debajo de las barras de arriba de las VL'));
+const ZB = 4, ZU = 12.6, SV = -119.8;   // v24d: cierre sur 1.1 cm al norte de la 16b (antes pasaba por la barra)
 function ring(x, sN, tail, col, name) {
   const p = [[x, tail != null ? tail : sN, zl(ZU)], [x, SV, zl(ZU)], [x, SV, zl(ZB)], [x, sN, zl(ZB)], [x, sN, zl(ZU)], [x, sN - 5.3, zl(ZU) - 5.3]];
   bar(p, .9, col, D, name);
   if (tail == null) bar([[x, sN - 0.4, zl(ZU) - 0.4], [x, sN - 5.7, zl(ZU) - 5.7 + 1.0]], .9, col, D, name);
 }
-[7.5, 20, 35, 50, 65, 80, 95].forEach(x => ring(x, -20.5, -4.5, C.r10a, 'pos. 10a · ESTRIBO CERRADO N-S Ø8 (carril 1) · 9.4 × 101 + cola de 16 hasta la nariz · L 2.45 · en 7.5 – 20 – 35 – 50 – 65 – 80 – 95 (entre las U pos. 14 y los E-C)'));
-[107.5, 192.5].forEach(x => ring(x, -3.5, null, C.r10b, 'pos. 10b · ESTRIBO CERRADO N-S Ø8 (carril 2, costados del diente) · 9.4 × 118 · 2 ganchos de 7.5 · L 2.70'));
-[122.5, 132.5, 142.5, 152.5, 162.5, 172.5].forEach(x => ring(x, 14, null, C.r10c, 'pos. 10c · ESTRIBO CERRADO N-S Ø8 (carril 2) hasta el final del DIENTE · 9.4 × 136 · 2 ganchos de 7.5 · L 3.06'));
-[[zl(4.8), 'de abajo'], [zl(11.0), 'de arriba, a 11.0 (recta, pasa por debajo de las barras de arriba de la VL2)']].forEach(([z, t]) => bar([[100, -4.3, z], [XB, -4.3, z], [XB, -4.3, z - 8.6]], .8, C.b15, D, 'pos. 15b · Ø8 E-O en el borde del carril 2, ' + t + ' · 108 + 9 · L 1.17'));
+[7.5, 20, 35, 50, 65, 80, 95].forEach(x => ring(x, -20.5, -4.5, C.r10a, 'pos. 10a · ESTRIBO CERRADO N-S Ø8 (carril 1) · 9.4 × 100 + cola de 16 hasta la nariz · L 2.42 · en 7.5 – 20 – 35 – 50 – 65 – 80 – 95 (entre las U pos. 14 y los E-C)'));
+[107.5, 192.5].forEach(x => ring(x, nz(1) + 15, null, C.r10b, 'pos. 10b · ESTRIBO CERRADO N-S Ø8 (carril 2) · 9.4 × 108 · 2 ganchos de 7.5 · L 2.50 · llega hasta el borde del carril 2 (cara de atrás de la contrahuella 11)'));
+[122.5, 132.5, 142.5, 152.5, 162.5, 172.5].forEach(x => ring(x, nz(1) + 15, null, C.r10b, 'pos. 10b · ESTRIBO CERRADO N-S Ø8 (carril 2) · 9.4 × 108 · 2 ganchos de 7.5 · L 2.50 · llega hasta el borde del carril 2 (cara de atrás de la contrahuella 11)'));
+{ const s15 = nz(1) + 13.75;          // v24d: adentro de la pata norte de los E-C pos. 40 y del cierre de los 10b
+  bar([[100, s15, zl(4.8)], [XB, s15, zl(4.8)], [XB, s15, zl(4.8) - 8.6]], .8, C.b15, D, 'pos. 15b · Ø8 E-O en el borde del carril 2, de abajo · gancho hacia ABAJO dentro de la VL2 · 108 + 9 · L 1.17');
+  bar([[100, s15, zl(11.0)], [XB, s15, zl(11.0)], [XB, s15 + 8.6, zl(11.0)]], .8, C.b15, D, 'pos. 15b · Ø8 E-O en el borde del carril 2, de arriba, a 11.0 · gancho ACOSTADO hacia el norte dentro de la VL2 (si baja, choca con el gancho de la de abajo) · 108 + 9 · L 1.17'); }
 for (let i = 0; i < 10; i++) { const x = 2.5 + 10 * i;
   bar([[x, -53.9, Z10 - 2.4], [x, -5.9, Z10 - 2.4], [x, -3.9, Z10 - 5.0], [x, -5.9, Z10 - 7.6], [x, -53.9, Z10 - 7.6]], .8, C.u14, D, 'pos. 14 · U Ø8 de la nariz del carril 1 (rama de arriba a 12.6) · 50 + 6 + 50 · L 1.06 (en 2.5 – 12.5 … 92.5)'); }
 [Z10 - 3.2, Z10 - 6.8].forEach(z => cross(2, 98, -4.7, z, C.u14, D, 'pos. 15 · 2 Ø8 dentro de las U de la nariz · L 0.96'));
-[[8.55, zl(3.55)], [13.45, zl(3.55)], [2, zl(11.8)], [11, zl(11.8)]].forEach(([s, z]) => cross(122, 178, s, z, C.b41, D, 'pos. 41 · Ø8 corta a lo ancho del DIENTE · L 0.56'));
+[u2s(nose1(10) + 8.25), u2s(nose1(10) + 13.75)].forEach(s => cross(2, 98, s, Z10 - 3.55, C.esq, D, 'pos. 15c · 2 Ø8 a lo ancho ARRIBA dentro de los E-C de la contrahuella 10 (los E-C cuelgan de estas barras, que apoyan sobre las U pos. 14 y los 10a) · L 0.96'));
 
 // ---- vigas nuevas: VD, VL1, VL2 (con gancho DENTRO de los pilares), Pd1 y pilares P18, P19, P20 (v19)
 const V = 'bvig', ZVB = Z10 - 30;
@@ -376,7 +397,7 @@ for (let i = 0; i < 8; i++) bar(inX(7.5 + 15 * i, rr(199.9, zE1 - 7.6, 239.1, zE
 for (let s = 235.5; s > -121; s -= 15) bar(rr(176.9, zE1 - 7.6, 196.1, zE1 - 2.4, 1.2, 2).map(([x, z]) => [x, s, z]), .8, C.ep, E12, 'pos. 27 · E1 · estribo Ø8 20×6 c/15 (pata) · L 0.67');
 [[239.1 - .85, zE1 - 3.55], [239.1 - .85, zE1 - 6.45], [219.9 + .85, zE1 - 3.55], [219.9 + .85, zE1 - 6.45]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 en las narices · L 1.95'));
 [[225.3, 2.9], [233.7, 2.9]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 abajo del cuerpo · L 1.95'));
-[[177.75, zE1 - 3.55], [177.75, zE1 - 6.45], [195.25, zE1 - 3.55], [195.25, zE1 - 6.45], [181.9, 2.9], [191.1, 2.9]].forEach(([x, z]) => bar([[x, 241, z], [x, -121, z]], .8, C.b10, E12, 'pos. 30 · E1 pata · Ø8 · L 3.62'));
+[[177.75, zE1 - 4.35], [177.75, zE1 - 5.65], [195.25, zE1 - 4.35], [195.25, zE1 - 5.65], [181.9, 3.7], [191.1, 3.7]].forEach(([x, z]) => bar([[x, 241, z], [x, -121, z]], .8, C.b10, E12, 'pos. 30 · E1 pata · Ø8 · L 3.62 · las de la tapa van POR DENTRO de las pos. 29 del frente (se cruzan, no a la misma altura)'));
 [[zE1 - 3.55], [zE1 - 6.45]].forEach(([z]) => cross(125, 175, 193.75, z, C.b10, E12, 'pos. 31 · E1 · Ø8 en la nariz del hombro · L 0.50'));
 // pos. 32: estribo del cuerpo Ø6 10×17 c/30, de 2 cm sobre el contrapiso hasta dentro de la tapa (z 2 a 19); corre por el frente/hombro y por toda la pata
 const P32 = 'pos. 32 · E1 · estribo Ø6 10×17 c/30 (cuerpo, sube hasta dentro de la tapa) · L 0.64 · 18 u. (6 frente y hombro + 12 pata)';
@@ -389,7 +410,7 @@ for (let i = 0; i < 8; i++) { const x = 11 + 15 * i;
   bar([[x, 173.5, zE2 - 2.4], [x, 138.9, zE2 - 2.4], [x, 138.9, zE2 - 7.6], [x, 173.5, zE2 - 7.6]], .8, C.ep, E12, 'pos. 35 · E2 · U Ø8 c/15 nariz S · 35 + 6 + 35 · L 0.76 (21 u.: 8 N + 8 S + 5 E)'); }
 [210.9, 195.9, 180.9, 165.9, 150.9].forEach(s => bar([[88.5, s, zE2 - 2.4], [123.1, s, zE2 - 2.4], [123.1, s, zE2 - 7.6], [88.5, s, zE2 - 7.6]], .8, C.ep, E12, 'pos. 35 · E2 · U Ø8 c/15 nariz E · 35 + 6 + 35 · L 0.76 (21 u.: 8 N + 8 S + 5 E)'));
 [[211.3, zE2 - 3.25], [211.3, zE2 - 6.75], [139.7, zE2 - 3.25], [139.7, zE2 - 6.75]].forEach(([s, z]) => cross(2, 124, s, z, C.b10, E12, 'pos. 36 · E2 · Ø8 esquinas narices N y S · L 1.22'));
-[[zE2 - 3.25], [zE2 - 6.75]].forEach(([z]) => bar([[122.3, 214, z], [122.3, 137, z]], .8, C.b10, E12, 'pos. 37 · E2 · Ø8 esquinas nariz E · L 0.76'));
+[[zE2 - 4.05], [zE2 - 5.95]].forEach(([z]) => bar([[122.3, 214, z], [122.3, 137, z]], .8, C.b10, E12, 'pos. 37 · E2 · Ø8 esquinas nariz E · L 0.76'));
 // pos. 42: enlace E1–E2 como en los peldaños: E-C en la cara N de E2 (5 cm detrás de su nariz), de la tapa de E1 hasta arriba de E2, corrido 5 cm de los 28a
 for (let i = 0; i < 8; i++) ec(12.5 + 15 * i, a => 214.5 - a, 5, zE1 - 8, zE2 - 2, E12, 'pos. 42 · ENLACE E1–E2 · E-C Ø8 8×24.4 c/15 (como la contrahuella de los peldaños) · de la tapa de E1 hasta arriba de E2 · L 0.80 · 8 u., x = 12.5 a 117.5');
 // existentes en la V1-15
@@ -399,14 +420,36 @@ const E = 'bex';
 bar([[-20, 226, 318.4], [220, 226, 318.4]], 1.2, C.ex, E, 'V1-15 · 1 Ø12 (existente, posición a confirmar)');
 
 // ============================================================ nombres
-label('DESCANSO +1.892', 60, -70, Z10 + 12); label('DIENTE', 150, 8, SOF - 12, '#ff8a9a');
+label('DESCANSO +1.892', 60, -70, Z10 + 12); label('contrahuella 11 sobre el descanso', 150, -10, SOF - 14, '#ff8c1a');
 label('TRAMO 1', 50, 120, zs(6) + 14); label('TRAMO 2', 150, 110, zt(4) + 16);
 label('VD 20×30', 100, -114, Z10 - 38, '#ff9d9d'); label('VL1', -8, -70, Z10 - 38, '#ff9d9d'); label('VL2', 208, -50, Z10 - 38, '#ff9d9d');
 label('Pd1', -8, -28, 60, '#ff9d9d'); label('P19', -10, -119, 240, '#e0b890'); label('P20', 210, -119, 240, '#e0b890'); label('P18', 215, 11, 240, '#e0b890');
 label('V1-15', 100, 226, 362, '#c0ccd6'); label('V1-14', 208, -50, 362, '#e0b890'); label('V1-13', 100, -114, 362, '#e0b890'); label('E1', 100, 229, 30, '#c0ccd6'); label('E2', 60, 175, 50, '#c0ccd6');
-label('horquillas Ø10 + epoxi', 150, 195, t8 + 12, '#23b04a');
+label('pelos Ø10 existentes DERECHOS', 150, 200, 366, '#23b04a'); label('pisada 19 unida a la losa', 150, 190, t8 - 16, '#ff8c1a');
 
-// ============================================================ cotas (cm) – v21b
+// ============================================================ personas de 1.70 m (escala)
+// (x, s, z) = centro entre los pies sobre el piso terminado; dir = +1 mira al norte (sube el tramo 2), −1 mira al sur
+const gMat = new THREE.MeshStandardMaterial({ color: '#36c5a0', roughness: .7 });
+function persona(x, s, z, dir, info) {
+  const W = (lx, ls, lz) => P(x + lx, s + dir * ls, z + lz);
+  const add = (g, lx, ls, lz) => { const m = new THREE.Mesh(g, gMat); m.position.copy(W(lx, ls, lz)); m.userData.info = info; G('gente').add(m); pickables.push(m); };
+  const cyl = (r0, r1, h) => new THREE.CylinderGeometry(r0 * S, r1 * S, h * S, 16);
+  [-10, 10].forEach(lx => {
+    add(new THREE.BoxGeometry(10 * S, 7 * S, 26 * S), lx, 6, 3.5);          // zapato (26 de largo, punta hacia adelante)
+    add(cyl(6.5, 5, 80), lx, 0, 7 + 40);                                      // pierna, de 7 a 87
+    add(cyl(5, 4, 62), lx * 2.5, 0, 145 - 31);                                // brazo, del hombro (+1.45) a la mano
+  });
+  const torso = cyl(21, 17, 62); torso.scale(1, 1, .55); add(torso, 0, 0, 85 + 31);   // torso, de 85 a 147
+  add(cyl(5.5, 5.5, 8), 0, 0, 151);                                          // cuello
+  add(new THREE.SphereGeometry(11 * S, 20, 14), 0, 0, 159);                  // cabeza: tope a 1.70
+}
+const PD = [150, -66, Z10 + 2], PB = [50, 280, 5];      // descanso (carril 2, frente al tramo 2) y planta baja (frente a E1)
+persona(...PD, 1, 'Persona de 1.70 m · en el DESCANSO (+1.892 terminado), carril 2, por subir el tramo 2 · la cabeza queda a ' + ((PD[2] + 170) / 100).toFixed(2) + ' m');
+persona(...PB, -1, 'Persona de 1.70 m · en la PLANTA BAJA (+0.05 terminado), frente a E1, por subir el tramo 1 · la cabeza queda a 1.75 m; la V1-15 (fondo +3.10) pasa 1.35 m por encima');
+label('persona 1.70 · descanso', PD[0], PD[1], PD[2] + 182, '#36c5a0'); label('persona 1.70 · planta baja', PB[0], PB[1], PB[2] + 182, '#36c5a0');
+
+
+// ============================================================ cotas (cm) – v22
 const CC = '#5fd4ff', cotaMat = new THREE.LineBasicMaterial({ color: CC, depthTest: false, transparent: true, opacity: .95 });
 function seg(pts) { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts.map(p => P(...p))), cotaMat); l.renderOrder = 9; G('cotas').add(l); }
 function ctext(text, x, s, z) {
@@ -427,27 +470,32 @@ function cota(a, b, txt, off, tn) {      // a, b = [x, s, z]; off = corrimiento 
   const n = Math.abs(u[2]) > .7 ? [0, -1, 0] : [0, 0, 1], t = [(u[0] + n[0]) * 1.8, (u[1] + n[1]) * 1.8, (u[2] + n[2]) * 1.8];
   [A, B].forEach(p => seg([add3(p, t, -1), add3(p, t, 1)]));
   const m = add3(A, d, .5); tn = tn || n;
-  if (txt) ctext(txt, ...add3(m, tn, 6));
+  ctext(txt, ...add3(m, tn, 6));
 }
 const NF11 = nz(1) - 1.5;                 // nariz terminada 11
 // descanso (sobre el piso terminado)
 cota([50, -124, Z10 + 2], [50, 0, Z10 + 2], '124 descanso carril 1');
-cota([135, -124, Z10 + 2], [135, NF11, Z10 + 2], '122.5 carril 2');
-cota([170, -104, Z10 + 2], [170, NF11, Z10 + 2], '102.5 útil hasta V1-13');
+cota([135, -124, Z10 + 2], [135, NF11, Z10 + 2], (124 + NF11).toFixed(1) + ' carril 2');
+cota([170, -104, Z10 + 2], [170, NF11, Z10 + 2], (104 + NF11).toFixed(1) + ' útil hasta V1-13');
+cota([100, NF11, Z10 + 2], [100, 0, Z10 + 2], (-NF11).toFixed(1) + ' desfase narices 10 y 11', null, [0, 0, 9]);
 cota([0, -134, Z10 + 2], [200, -134, Z10 + 2], '200 ancho');
-// diente
-cota([120, 17, SOF], [180, 17, SOF], '60 diente', [0, 0, -6], [0, 0, -1]);
-cota([180, -1.5, SOF], [180, 17, SOF], '18.5', [6, 0, 0], [0, 0, -1]);
-cota([180, 17, SOF], [180, 17, Z10], '15', [6, 0, 0], [1, 0, 0]);
 // tramo 2: alzada y huella tipo (pisada 15)
 cota([200, nz(5), zt(4)], [200, nz(5), zt(5)], '18.42 alzada', [6, 0, 0], [1, 0, 0]);
 cota([200, nz(5), zt(5) + 2], [200, nz(6), zt(5) + 2], '27 huella', [6, 0, 0]);
-// llegada: pisada 18 contra la V1-15 y horquillas con epoxi
-cota([200, nz(8), t8], [200, BEAM, t8], '27 pisada 18', [6, 0, 0]);
-cota([200, BEAM, t8], [200, BEAM, 350], '15.4', [6, 0, 0], [1, 0, 0]);
-cota([112.5, BEAM, t8 - 2.5], [112.5, BEAM + 15, t8 - 2.5], '15 patas con epoxi', [0, 0, 8]);
-cota([112.5, BEAM + 15, 310], [112.5, BEAM + 15, t8 - 7.5], '', [0, 6, 0], [0, 1, 0]);
-cota([112.5, BEAM + 15, 310], [112.5, BEAM + 15, t8 - 2.5], (t8 - 2.5 - 310).toFixed(1) + ' / ' + (t8 - 7.5 - 310).toFixed(1) + ' agujeros (desde el fondo de la V1-15)', [0, 12, 0], [0, 1, 0]);
+// pisada 18, contrahuella 19 y pisada 19 unida a la losa
+cota([200, nz(8), t8], [200, nz(9), t8], '27', [6, 0, 0]);
+cota([200, nz(8), t8 - 10], [200, nz(9) + 17, t8 - 10], '44 pisada 18 (hormigón)', [6, 0, -6], [0, 0, -1.5]);
+cota([200, nz(9) + 17, t8 - 10], [200, 216, t8 - 10], '10 libre', [6, 0, -6], [0, 0, -1.5]);
+cota([200, nz(9), 353], [200, 216, 353], '27 pisada 19 unida a la losa', [6, 0, 8], [1.5, 0, 1]);
+cota([200, nz(9), t8 + 2], [200, nz(9), 355], '18.42', [6, -6, 0], [0, -1, 0]);
+cota([200, nz(9), 343], [200, nz(9), 353], '10 nariz', [6, 6, 0], [0, 1, 0]);
+cota([200, nz(9) + 5, t8 + 2], [200, nz(9) + 5, 343], '6.4 LED', [6, 12, 0], [0, 1, 0]);
+cota([200, 216, 340], [200, 216, 353], '13 cuerpo', [6, 6, 0], [0, 1, 0]);
+// pelos (en el primero, x = 105)
+cota([105, BEAM, ZPE], [105, BEAM - 40, ZPE], '40 sobresalen hoy', [0, 0, 24]);
+cota([105, BEAM, ZPE], [105, SPE, ZPE], (BEAM - SPE).toFixed(1) + ' quedan', [0, 0, 12]);
+cota([105, SPE, ZPE], [105, BEAM - 40, ZPE], (40 - (BEAM - SPE)).toFixed(1) + ' se cortan', [0, 0, -8], [0, 0, -1]);
+cota([105, BEAM + 4, ZPE], [105, BEAM + 4, 350], '≈5 (medir)', [0, 6, 0], [0, 1, 0]);
 // tramo 1 (narices terminadas en s = 243 − 27·(k − 1); 1.5 de porcelanato en el canto)
 const NF1 = k => 243 - 27 * (k - 1), ZF = k => zs(k) + 2;
 cota([100, NF1(5), ZF(5)], [100, NF1(6), ZF(5)], '27 huella', [6, 0, 0]);
@@ -473,7 +521,7 @@ cota([0, 216, ZF(2)], [127, 216, ZF(2)], '127 E2', [0, 0, 6]);
 cota([127, 216, ZF(2)], [127, 135, ZF(2)], '81 E2', [6, 0, 0]);
 cota([127, 135, ZF(1)], [127, 135, ZF(2)], '18.42', [6, 0, 0], [1, 0, 0]);
 // niveles
-ctext('+1.892 descanso', 20, -60, Z10 + 6); ctext('+3.55 PA terminado (+3.50 losa)', 160, 275, 356); ctext('+3.366 pisada 18', 150, nz(8) - 20, t8 + 10);
+ctext('+1.892 descanso', 20, -60, Z10 + 6); ctext('+3.55 PA terminado (+3.50 losa)', 160, 275, 356); ctext('+3.366 pisada 18', 160, nz(8) + 4, t8 + 5); ctext('+3.55 pisada 19 = PA', 160, nz(9) + 8, 362);
 
 // ============================================================ número de escalones (01 a 19)
 function ntext(text, x, s, z, big) {
@@ -488,14 +536,14 @@ ntext('01 E1', 60, 230, ZF(1) + 4); ntext('02 E2', 60, 176, ZF(2) + 4);
 for (let k = 3; k <= 9; k++) ntext('0' + k, 50, NF1(k) - 13.5, ZF(k) + 4);
 ntext('10 descanso', 50, -12, Z10 + 6);
 for (let j = 1; j <= 8; j++) ntext(String(10 + j), 150, nz(j) + 12, zt(j) + 6);
-ntext('19 llegada PA', 150, 232, 358);
-ntext('19 alzadas de 18.42 · tramo 1: 10 (01–10) · tramo 2: 9 (11–19) · 17 huellas de 27', 100, 60, 420, true);
+ntext('19 unida a la losa', 150, nz(9) + 13, 360);
+ntext('19 alzadas de 18.42 · tramo 1: 10 (01–10) · tramo 2: 9 (11–19, la 19 unida a la losa) · huella 27 y nariz 5 en todos', 100, 60, 420, true);
 // ============================================================ capas (panel)
 const LAYERS_C = [['exist', 'Existente: V1-15, losas, contrapiso', '#7d8a96', true], ['muros', 'Muros y vidrio', '#a0826d', true],
-  ['nuevo', 'Hormigón nuevo (tramos, descanso, vigas, pilares, V1-13, V1-14)', '#c9d0d6', true], ['fin', 'Porcelanato', '#d8c49a', false]];
-const LAYERS_B = [['bt1', 'Tramo 1: E-P, E-C, pelos', C.ep, true], ['bt2', 'Tramo 2: E-P, E-C, horquillas', C.horq, true],
+  ['nuevo', 'Hormigón nuevo (tramos, descanso, vigas, pilares, V1-13, V1-14)', '#c9d0d6', true], ['fin', 'Porcelanato', '#d8c49a', false], ['gente', 'Personas de 1.70 m (escala): en el descanso y en planta baja', '#36c5a0', true]];
+const LAYERS_B = [['bt1', 'Tramo 1: E-P, E-C, pelos', C.ep, true], ['bt2', 'Tramo 2: E-P, E-C, pelos doblados', C.horq, true],
   ['bdes', 'Parrilla del descanso', C.r10c, true], ['bvig', 'VD, VL1, VL2, Pd1', C.viga, true], ['bpil', 'Pilares P18, P19, P20 (nuevos)', C.pil, true],
-  ['be12', 'E1 y E2', C.ep, true], ['bex', 'Existentes: V1-15 y pelos de las bases', C.ex, false]];
+  ['be12', 'E1 y E2', C.ep, true], ['bex', 'Existentes: V1-15, pelos de las bases y de la losa', C.ex, false]];
 function makeRows(el, list) {
   list.forEach(([key, text, col, on]) => {
     const lab = document.createElement('label'); lab.className = 'row';
@@ -519,7 +567,7 @@ document.getElementById('cot').addEventListener('change', e => { G('cotas').visi
 const VIEWS = {
   'v-iso': [[5.4, 6.2, 4.6], [1.0, 1.7, -0.5]], 'v-hall': [[5.2, 2.6, 0.1], [1.0, 2.0, -0.6]], 'v-top': [[1.0, 8.2, -0.55], [1.0, 1.5, -0.56]],
   'v-below': [[3.2, -0.6, 2.2], [1.0, 1.7, 0.2]], 'v-land': [[3.6, 3.5, 2.4], [1.0, 1.75, 0.5]], 'v-arr': [[3.0, 4.2, -3.8], [1.5, 3.2, -2.0]],
-  'v-cot': [[3.8, 4.0, -1.25], [1.45, 3.35, -2.05]], 'v-cotd': [[1.0, 4.6, 0.2], [1.0, 1.9, -0.5]], 'v-cot1': [[3.3, 1.5, -1.9], [0.5, 1.0, -1.2]], 'v-cote': [[2.6, 1.7, -4.3], [1.0, 0.25, -1.8]]
+  'v-cot': [[3.8, 4.0, -1.1], [1.45, 3.35, -1.95]], 'v-p19': [[2.75, 3.52, -1.72], [1.5, 3.36, -2.02]], 'v-cotd': [[1.0, 4.6, 0.2], [1.0, 1.9, -0.5]], 'v-cot1': [[3.3, 1.5, -1.9], [0.5, 1.0, -1.2]], 'v-cote': [[2.6, 1.7, -4.3], [1.0, 0.25, -1.8]], 'v-gente': [[5.0, 3.6, 3.4], [1.0, 1.4, -1.0]]
 };
 function go(v) { const [p, t] = VIEWS[v]; camera.position.set(...p); controls.target.set(...t); controls.update(); }
 Object.keys(VIEWS).forEach(k => document.getElementById(k).addEventListener('click', () => go(k)));

@@ -358,22 +358,22 @@ pilar(200, 1, 30, 20, [[15, 3.1], [15, 16.9]], 'P18');
 // E1 y E2 (lámina E-07): estribos rojos, barras azules
 const E12 = 'be12', zE1 = zs(1), zE2 = zs(2);
 // pos. 28a: frente (x 7.5 … 112.5, c/15) estribo 40×6 igual al E-P de los peldaños: toma la nariz de E1 y entra bajo E2 hasta el E-C de enlace (pos. 42)
-for (let i = 0; i < 8; i++) bar(inX(7.5 + 15 * i, rr(199.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28a · E1 · estribo Ø8 40×6 c/15 (frente, igual al E-P de los peldaños) · entra bajo E2 hasta el E-C de enlace pos. 42 · L 1.08 · 8 u., x = 7.5 a 112.5');
+for (let i = 0; i < 8; i++) bar(inX(7.5 + 15 * i, rr(199.9, zE1 - 7.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28a · E1 · estribo Ø8 40×6 c/15 (frente, igual al E-P de los peldaños) · entra bajo E2 hasta el E-C de enlace pos. 42 · L 1.08 · 8 u., x = 7.5 a 112.5');
 // pos. 28b: hombro (3 u.) estribo 47×6, toma el frente y el hombro
-[135, 150, 165].forEach(x => bar(inX(x, rr(192.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28b · E1 · estribo Ø8 47×6 (frente + hombro) · L 1.21 · 3 u.'));
+[135, 150, 165].forEach(x => bar(inX(x, rr(192.9, zE1 - 7.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28b · E1 · estribo Ø8 47×6 (frente + hombro) · L 1.21 · 3 u.'));
 // pos. 43: Ø8 a lo ancho en el fondo de los 28a, dentro del pie de los 42 (como las Ø8 de esquina de los peldaños)
-[zE1 - 8.75, zE1 - 3.25].forEach(z => cross(2, 124, 200.75, z, C.b10, E12, 'pos. 43 · ENLACE E1–E2 · Ø8 a lo ancho en el fondo de los 28a, dentro del pie de los 42 · L 1.22 · 2 u.'));
-for (let s = 235.5; s > -121; s -= 15) bar(rr(176.9, zE1 - 9.6, 196.1, zE1 - 2.4, 1.2, 2).map(([x, z]) => [x, s, z]), .8, C.ep, E12, 'pos. 27 · E1 · estribo Ø8 20×6 c/15 (pata) · L 0.67');
-[[239.1 - .85, zE1 - 3.25], [239.1 - .85, zE1 - 8.75], [219.9 + .85, zE1 - 3.25], [219.9 + .85, zE1 - 8.75]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 en las narices · L 1.95'));
+[zE1 - 6.45, zE1 - 3.55].forEach(z => cross(2, 124, 200.75, z, C.b10, E12, 'pos. 43 · ENLACE E1–E2 · Ø8 a lo ancho en el fondo de los 28a, dentro del pie de los 42 · L 1.22 · 2 u.'));
+for (let s = 235.5; s > -121; s -= 15) bar(rr(176.9, zE1 - 7.6, 196.1, zE1 - 2.4, 1.2, 2).map(([x, z]) => [x, s, z]), .8, C.ep, E12, 'pos. 27 · E1 · estribo Ø8 20×6 c/15 (pata) · L 0.67');
+[[239.1 - .85, zE1 - 3.55], [239.1 - .85, zE1 - 6.45], [219.9 + .85, zE1 - 3.55], [219.9 + .85, zE1 - 6.45]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 en las narices · L 1.95'));
 [[225.3, 2.9], [233.7, 2.9]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 abajo del cuerpo · L 1.95'));
-[[177.75, zE1 - 3.25], [177.75, zE1 - 8.75], [195.25, zE1 - 3.25], [195.25, zE1 - 8.75], [181.9, 2.9], [191.1, 2.9]].forEach(([x, z]) => bar([[x, 241, z], [x, -121, z]], .8, C.b10, E12, 'pos. 30 · E1 pata · Ø8 · L 3.62'));
-[[zE1 - 3.25], [zE1 - 8.75]].forEach(([z]) => cross(125, 175, 193.75, z, C.b10, E12, 'pos. 31 · E1 · Ø8 en la nariz del hombro · L 0.50'));
+[[177.75, zE1 - 3.55], [177.75, zE1 - 6.45], [195.25, zE1 - 3.55], [195.25, zE1 - 6.45], [181.9, 2.9], [191.1, 2.9]].forEach(([x, z]) => bar([[x, 241, z], [x, -121, z]], .8, C.b10, E12, 'pos. 30 · E1 pata · Ø8 · L 3.62'));
+[[zE1 - 3.55], [zE1 - 6.45]].forEach(([z]) => cross(125, 175, 193.75, z, C.b10, E12, 'pos. 31 · E1 · Ø8 en la nariz del hombro · L 0.50'));
 // pos. 32: estribo del cuerpo Ø6 10×17 c/30, de 2 cm sobre el contrapiso hasta dentro de la tapa (z 2 a 19); corre por el frente/hombro y por toda la pata
 const P32 = 'pos. 32 · E1 · estribo Ø6 10×17 c/30 (cuerpo, sube hasta dentro de la tapa) · L 0.64';
 for (let x = 15; x < 175; x += 30) bar(inX(x, rr(224.5, 2, 234.5, 19, 1.2, 2)), .6, C.vest, E12, P32);
 for (let s = 207; s > -120; s -= 30) bar(rr(181.5, 2, 191.5, 19, 1.2, 2).map(([x, z]) => [x, s, z]), .6, C.vest, E12, P32);
 for (let i = 0; i < 6; i++) cross(3.5, 123.5, 210 - 13.8 * i, zE2 - 3.6, C.b10, E12, 'pos. 33 · E2 · malla sup. Ø6 c/15 E-O · L 1.20');
-for (let i = 0; i < 9; i++) bar([[6 + 14.4 * i, 212.5, zE2 - 3.0], [6 + 14.4 * i, 138.5, zE2 - 3.0]], .6, C.b10, E12, 'pos. 34 · E2 · malla sup. Ø6 c/15 N-S · L 0.74');
+for (let i = 0; i < 9; i++) bar([[6 + 14 * i, 212.5, zE2 - 3.0], [6 + 14 * i, 138.5, zE2 - 3.0]], .6, C.b10, E12, 'pos. 34 · E2 · malla sup. Ø6 c/14 N-S (x 6 … 118: la última a 4 cm de la pos. 37) · L 0.74');
 for (let i = 0; i < 8; i++) { const x = 11 + 15 * i;
   bar([[x, 184.5, zE2 - 2.4], [x, 212.1, zE2 - 2.4], [x, 212.1, zE2 - 7.6], [x, 184.5, zE2 - 7.6]], .8, C.ep, E12, 'pos. 35 · E2 · U Ø8 c/15 nariz N · L 0.90');
   bar([[x, 168.9, zE2 - 2.4], [x, 138.9, zE2 - 2.4], [x, 138.9, zE2 - 7.6], [x, 168.9, zE2 - 7.6]], .8, C.ep, E12, 'pos. 35 · E2 · U Ø8 c/15 nariz S · L 0.90'); }
@@ -381,7 +381,7 @@ for (let i = 0; i < 8; i++) { const x = 11 + 15 * i;
 [[211.3, zE2 - 3.25], [211.3, zE2 - 6.75], [139.7, zE2 - 3.25], [139.7, zE2 - 6.75]].forEach(([s, z]) => cross(2, 124, s, z, C.b10, E12, 'pos. 36 · E2 · Ø8 esquinas narices N y S · L 1.22'));
 [[zE2 - 3.25], [zE2 - 6.75]].forEach(([z]) => bar([[122.3, 214, z], [122.3, 137, z]], .8, C.b10, E12, 'pos. 37 · E2 · Ø8 esquinas nariz E · L 0.76'));
 // pos. 42: enlace E1–E2 como en los peldaños: E-C en la cara N de E2 (5 cm detrás de su nariz), de la tapa de E1 hasta arriba de E2, corrido 5 cm de los 28a
-for (let i = 0; i < 8; i++) ec(12.5 + 15 * i, a => 214.5 - a, 5, zE1 - 10, zE2 - 2, E12, 'pos. 42 · ENLACE E1–E2 · E-C Ø8 8×26.4 c/15 (como la contrahuella de los peldaños) · de la tapa de E1 hasta arriba de E2 · L 0.84 · 8 u., x = 12.5 a 117.5');
+for (let i = 0; i < 8; i++) ec(12.5 + 15 * i, a => 214.5 - a, 5, zE1 - 8, zE2 - 2, E12, 'pos. 42 · ENLACE E1–E2 · E-C Ø8 8×24.4 c/15 (como la contrahuella de los peldaños) · de la tapa de E1 hasta arriba de E2 · L 0.80 · 8 u., x = 12.5 a 117.5');
 // existentes en la V1-15
 const E = 'bex';
 [4.4, 10, 15.6].forEach(o => bar([[-20, 216 + o, 314.4], [220, 216 + o, 314.4]], 1.6, C.ex, E, 'V1-15 · 3 Ø16 inferiores (existentes)'));

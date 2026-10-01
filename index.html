@@ -37,7 +37,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .note { color: var(--mute); font-size: 12px; line-height: 1.45; }
 .data { font-family: var(--f-data); font-variant-numeric: tabular-nums; font-size: 12px; }
 #toggle { display: none; position: absolute; left: 12px; bottom: 12px; z-index: 3; }
-#lift { position: absolute; right: 12px; bottom: 12px; z-index: 3; display: flex; flex-direction: column; gap: 6px; }
+#lift { position: absolute; right: 12px; bottom: 12px; z-index: 3; display: grid; grid-template-columns: repeat(3, 46px); grid-template-areas: ". up ." "lt . rt" ". dn ."; gap: 6px; }
+#up { grid-area: up; } #dn { grid-area: dn; } #lt { grid-area: lt; } #rt { grid-area: rt; }
 #lift button { width: 46px; height: 46px; font-size: 18px; line-height: 1; padding: 0; touch-action: none; user-select: none; }
 #load { position: absolute; inset: 0; display: grid; place-items: center; color: var(--mute); pointer-events: none; }
 #load[hidden] { display: none; }
@@ -59,8 +60,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   <div id="load">Cargando el modelo…</div>
   <aside id="panel" class="closed-mobile">
     <header>
-      <h1>Escalera semi cascada · v20</h1>
-      <div class="sub">Basado en las láminas E-01 a E-08 (01/10) · cotas en cm</div>
+      <h1>Escalera semi cascada · v21</h1>
+      <div class="sub">Igual a las láminas E-01 a E-08 v21 (01/10) · cotas en cm</div>
     </header>
     <div id="scroll">
       <div class="grp">
@@ -88,12 +89,12 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         <h2>Textos</h2>
         <label class="row"><input id="lbl" type="checkbox" checked><span class="t">Nombres de los elementos</span></label>
       </div>
-      <p class="note">Tocá una barra o un elemento para ver qué es. Arrastrá para girar, dos dedos o rueda para acercar. ▲ ▼ suben y bajan la cámara (mantené apretado).<br>
+      <p class="note">Tocá una barra o un elemento para ver qué es. Arrastrá para girar, dos dedos o rueda para acercar. ▲ ▼ suben y bajan la cámara, ◀ ▶ la corren a izquierda y derecha (mantené apretado; también con las flechas del teclado).<br>
       Predimensionado CIRSOC 201 (H21, ADN 500): lo revisa y firma el ingeniero de la obra.</p>
     </div>
   </aside>
   <button id="toggle" type="button">Capas</button>
-  <div id="lift"><button id="up" type="button" aria-label="Subir la cámara" title="Subir la cámara (RePág)">▲</button><button id="dn" type="button" aria-label="Bajar la cámara" title="Bajar la cámara (AvPág)">▼</button></div>
+  <div id="lift"><button id="up" type="button" aria-label="Subir la cámara" title="Subir la cámara (RePág)">▲</button><button id="lt" type="button" aria-label="Correr la cámara a la izquierda" title="Correr la cámara a la izquierda (←)">◀</button><button id="rt" type="button" aria-label="Correr la cámara a la derecha" title="Correr la cámara a la derecha (→)">▶</button><button id="dn" type="button" aria-label="Bajar la cámara" title="Bajar la cámara (AvPág)">▼</button></div>
   <div id="info"><b>Tocá un elemento</b><div class="m">Se muestra acá qué es, la posición, el diámetro y el largo.</div></div>
 </div>
 
@@ -196,15 +197,18 @@ box(0, 200, -134, -124, 0, 310, M.vidrio, 'muros', 'Vidrio fijo');
 const Nw = (a, b, c, d, e, f, t, m) => box(a, b, c, d, e, f, m || M.nuevo, 'nuevo', t);
 // E1 en L y E2
 // E1 (lámina E-07): tapa de 10 cm que forma la nariz (frente 200×27, hombro 46×27, pata 27 junto al hall) sobre un cuerpo de 14 cm centrado (retirado 6.5 de cada borde)
-const E1T = zs(1) - 10;
-Nw(0, 200, 216, 243, E1T, zs(1), 'E1 tapa de 10 cm (frente 2.00 × 0.27, nariz + LED) · tapa a +0.214 estructural, +0.234 terminado'); Nw(127, 173, 189, 216, E1T, zs(1), 'E1 tapa de 10 cm (hombro 0.46 × 0.27)'); Nw(173, 200, -124, 216, E1T, zs(1), 'E1 tapa de 10 cm (pata 0.27 junto al hall, 3.67 en total)');
-Nw(0, 127, 216, 236.5, 0, E1T, 'E1 cuerpo (frente): retirado 6.5 del borde, se une al macizo de E2'); Nw(127, 179.5, 195.5, 236.5, 0, E1T, 'E1 cuerpo (hombro)');
-Nw(179.5, 193.5, 222.5, 236.5, 0, E1T, 'E1 cuerpo (esquina del frente)'); Nw(179.5, 193.5, -117.5, 222.5, 0, E1T, 'E1 cuerpo de la pata: 14 cm de ancho, centrado bajo la tapa de 27');
-// E2 (lámina E-07): tapa de 12 cm con nariz de 5 cm en N, E y S sobre el cuerpo macizo; por abajo (hasta +0.234) el cuerpo llega al E1
-const E2T = zs(2) - 12, NZ = 5;
-Nw(0, 127, 135, 216, E2T, zs(2), 'E2 tapa de 12 cm (+0.418): nariz de 5 cm en N, E y S + LED · 1.27 × 0.81', M.nuevo);
-Nw(0, 127 - NZ, 135 + NZ, 216 - NZ, 0, E2T, 'E2 cuerpo macizo (retirado 5 cm de la nariz en N, E y S)');
-Nw(0, 127, 216 - NZ, 216, 0, zs(1), 'Unión E1–E2 (cuerpo de E2 hasta el nivel de E1)'); Nw(127 - NZ, 127, 189, 216 - NZ, 0, zs(1), 'Unión E1–E2 (lado del hombro)');
+// v21: TODAS las narices iguales a las de los peldaños (lámina E-07): tapa de 10 cm de hormigón, vuelo de 5 cm sobre el cuerpo y 1.5 de porcelanato en el canto
+// (el borde terminado está en s 243 / 216 / 189 / 135 y x 127 / 173 / 200; el hormigón 1.5 cm adentro en cada nariz)
+const E1T = zs(1) - 10, E2T = zs(2) - 10;
+Nw(0, 125.5, 209.5, 241.5, E1T, zs(1), 'E1 tapa de 10 cm (frente 2.00 × 0.27): nariz de 5 cm + LED, igual que los peldaños · +0.214 estructural, +0.234 terminado');
+Nw(125.5, 174.5, 190.5, 241.5, E1T, zs(1), 'E1 tapa de 10 cm (frente + hombro 0.46 × 0.27): nariz de 5 cm + LED'); Nw(120.5, 125.5, 190.5, 209.5, E1T, zs(1), 'E1 tapa del hombro bajo la nariz E de E2');
+Nw(174.5, 198.5, -124, 241.5, E1T, zs(1), 'E1 tapa de 10 cm (pata 0.27 junto al hall, 3.67): narices de 5 cm a los dos lados + LED');
+Nw(0, 125.5, 209.5, 236.5, 0, E1T, 'E1 cuerpo (frente): 5 cm detrás de la nariz, se une al macizo de E2');
+Nw(120.5, 179.5, 195.5, 209.5, 0, E1T, 'E1 cuerpo (hombro)'); Nw(125.5, 179.5, 209.5, 236.5, 0, E1T, 'E1 cuerpo (frente + hombro)');
+Nw(179.5, 193.5, -117.5, 236.5, 0, E1T, 'E1 cuerpo de la pata: 14 cm, 5 cm detrás de cada nariz');
+// E2: tapa de 10 cm con nariz de 5 cm en N, E y S (igual que los peldaños) sobre el cuerpo macizo
+Nw(0, 125.5, 136.5, 214.5, E2T, zs(2), 'E2 tapa de 10 cm (+0.418): nariz de 5 cm en N, E y S + LED, igual que los peldaños · 1.27 × 0.81');
+Nw(0, 120.5, 141.5, 209.5, 0, E2T, 'E2 cuerpo macizo (5 cm detrás de la nariz en N, E y S)');
 // tramo 1: pisadas 03-09 y contrahuellas 03-10
 for (let k = 3; k <= 9; k++) Nw(0, 100, u2s(nose1(k + 1) + 17), u2s(nose1(k)), zs(k) - 10, zs(k), 'Tramo 1 · pisada 0' + k + ' (losa de 10)');
 for (let k = 3; k <= 10; k++) {
@@ -353,13 +357,12 @@ pilar(200, -134, 20, 30, [[3.1, 15], [16.9, 15]], 'P20');
 pilar(200, 1, 30, 20, [[15, 3.1], [15, 16.9]], 'P18');
 // E1 y E2 (lámina E-07): estribos rojos, barras azules
 const E12 = 'be12', zE1 = zs(1), zE2 = zs(2);
-// pos. 28 corre completo de oeste a este (c/15, x = 7.5 … 157.5). Frente a E2 hace de E-P como en los escalones: termina contra el E-C de enlace (pos. 42); en el hombro toma todo el ancho
-for (let i = 0; i < 11; i++) { const x = 7.5 + 15 * i, hombro = x > 120;
-  bar(inX(x, rr(hombro ? 192.9 : 201.4, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, hombro
-    ? 'pos. 28 · E1 · estribo Ø8 47×6 (frente + hombro) · L 1.21 · 3 u. en x = 127.5 / 142.5 / 157.5'
-    : 'pos. 28 · E1 · estribo Ø8 38.5×6 c/15 (frente, como el E-P de los escalones) · termina contra el E-C de enlace pos. 42 de E2 · L ≈ 1.04 · 8 u., x = 7.5 a 112.5'); }
-// Ø8 a lo ancho en el fondo del pos. 28, dentro del pie del pos. 42: atan los dos estribos (como las Ø8 de esquina de los escalones)
-[zE1 - 8.75, zE1 - 3.25].forEach(z => cross(2, 124, 202.25, z, C.b10, E12, 'pos. 43 · ENLACE E1–E2 · Ø8 a lo ancho en el fondo del pos. 28, dentro del pie del pos. 42 · L 1.22 · 2 u.'));
+// pos. 28a: frente (x 7.5 … 112.5, c/15) estribo 40×6 igual al E-P de los peldaños: toma la nariz de E1 y entra bajo E2 hasta el E-C de enlace (pos. 42)
+for (let i = 0; i < 8; i++) bar(inX(7.5 + 15 * i, rr(199.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28a · E1 · estribo Ø8 40×6 c/15 (frente, igual al E-P de los peldaños) · entra bajo E2 hasta el E-C de enlace pos. 42 · L 1.08 · 8 u., x = 7.5 a 112.5');
+// pos. 28b: hombro (3 u.) estribo 47×6, toma el frente y el hombro
+[135, 150, 165].forEach(x => bar(inX(x, rr(192.9, zE1 - 9.6, 239.1, zE1 - 2.4, 1.2, 2)), .8, C.ep, E12, 'pos. 28b · E1 · estribo Ø8 47×6 (frente + hombro) · L 1.21 · 3 u.'));
+// pos. 43: Ø8 a lo ancho en el fondo de los 28a, dentro del pie de los 42 (como las Ø8 de esquina de los peldaños)
+[zE1 - 8.75, zE1 - 3.25].forEach(z => cross(2, 124, 200.75, z, C.b10, E12, 'pos. 43 · ENLACE E1–E2 · Ø8 a lo ancho en el fondo de los 28a, dentro del pie de los 42 · L 1.22 · 2 u.'));
 for (let s = 235.5; s > -121; s -= 15) bar(rr(176.9, zE1 - 9.6, 196.1, zE1 - 2.4, 1.2, 2).map(([x, z]) => [x, s, z]), .8, C.ep, E12, 'pos. 27 · E1 · estribo Ø8 20×6 c/15 (pata) · L 0.67');
 [[239.1 - .85, zE1 - 3.25], [239.1 - .85, zE1 - 8.75], [219.9 + .85, zE1 - 3.25], [219.9 + .85, zE1 - 8.75]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 en las narices · L 1.95'));
 [[225.3, 2.9], [233.7, 2.9]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 abajo del cuerpo · L 1.95'));
@@ -377,8 +380,8 @@ for (let i = 0; i < 8; i++) { const x = 11 + 15 * i;
 [210.9, 195.9, 180.9, 165.9, 150.9].forEach(s => bar([[95.5, s, zE2 - 2.4], [123.1, s, zE2 - 2.4], [123.1, s, zE2 - 7.6], [95.5, s, zE2 - 7.6]], .8, C.ep, E12, 'pos. 35 · E2 · U Ø8 c/15 nariz E · L 0.90'));
 [[211.3, zE2 - 3.25], [211.3, zE2 - 6.75], [139.7, zE2 - 3.25], [139.7, zE2 - 6.75]].forEach(([s, z]) => cross(2, 124, s, z, C.b10, E12, 'pos. 36 · E2 · Ø8 esquinas narices N y S · L 1.22'));
 [[zE2 - 3.25], [zE2 - 6.75]].forEach(([z]) => bar([[122.3, 214, z], [122.3, 137, z]], .8, C.b10, E12, 'pos. 37 · E2 · Ø8 esquinas nariz E · L 0.76'));
-// pos. 42: enlace E1–E2 igual que en los escalones: E-C en la cara N de E2 (5 cm detrás de la nariz), de la tapa de E1 hasta arriba de E2, alternado con los pos. 28 (que hacen de E-P de E1)
-for (let i = 0; i < 8; i++) ec(12.5 + 15 * i, a => 216 - a, 5, zE1 - 10, zE2 - 2, E12, 'pos. 42 · ENLACE E1–E2 · E-C Ø8 8×26.4 c/15 (como la contrahuella de los escalones) · de la tapa de E1 hasta arriba de E2 · L ≈ 0.80 · 8 u., x = 12.5 a 117.5');
+// pos. 42: enlace E1–E2 como en los peldaños: E-C en la cara N de E2 (5 cm detrás de su nariz), de la tapa de E1 hasta arriba de E2, corrido 5 cm de los 28a
+for (let i = 0; i < 8; i++) ec(12.5 + 15 * i, a => 214.5 - a, 5, zE1 - 10, zE2 - 2, E12, 'pos. 42 · ENLACE E1–E2 · E-C Ø8 8×26.4 c/15 (como la contrahuella de los peldaños) · de la tapa de E1 hasta arriba de E2 · L 0.84 · 8 u., x = 12.5 a 117.5');
 // existentes en la V1-15
 const E = 'bex';
 [4.4, 10, 15.6].forEach(o => bar([[-20, 216 + o, 314.4], [220, 216 + o, 314.4]], 1.6, C.ex, E, 'V1-15 · 3 Ø16 inferiores (existentes)'));
@@ -447,16 +450,25 @@ document.getElementById('load').hidden = true;
 const panel = document.getElementById('panel'), tg = document.getElementById('toggle');
 if (window.matchMedia('(max-width: 720px)').matches) panel.classList.add('closed');
 tg.addEventListener('click', () => panel.classList.toggle('closed'));
-// subir / bajar la cámara: mueve la cámara y el punto que mira juntos (mantener apretado para seguir moviendo)
-function lift(d) { camera.position.y += d; controls.target.y += d; controls.update(); }
+// subir / bajar y correr a izquierda / derecha: mueve la cámara y el punto que mira juntos (mantener apretado para seguir moviendo)
+const side = new THREE.Vector3();
+function move(axis, d) {
+  if (axis === 'y') side.set(0, 1, 0);
+  else { side.setFromMatrixColumn(camera.matrix, 0); side.y = 0; if (side.lengthSq() < 1e-8) side.set(1, 0, 0); side.normalize(); }   // derecha de la pantalla, en horizontal
+  side.multiplyScalar(d); camera.position.add(side); controls.target.add(side); controls.update();
+}
 let liftT = null;
-[['up', 1], ['dn', -1]].forEach(([id, sg]) => {
+[['up', 'y', 1], ['dn', 'y', -1], ['rt', 'x', 1], ['lt', 'x', -1]].forEach(([id, axis, sg]) => {
   const b = document.getElementById(id), stop = () => { clearInterval(liftT); liftT = null; };
-  b.addEventListener('pointerdown', e => { e.preventDefault(); lift(sg * .05); clearInterval(liftT); liftT = setInterval(() => lift(sg * .04), 40); });
+  b.addEventListener('pointerdown', e => { e.preventDefault(); move(axis, sg * .05); clearInterval(liftT); liftT = setInterval(() => move(axis, sg * .04), 40); });
   ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
-  b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lift(sg * .1); } });
+  b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); move(axis, sg * .1); } });
 });
-window.addEventListener('keydown', e => { if (e.key === 'PageUp') { e.preventDefault(); lift(.1); } else if (e.key === 'PageDown') { e.preventDefault(); lift(-.1); } });
+const KEYS = { PageUp: ['y', 1], PageDown: ['y', -1], ArrowUp: ['y', 1], ArrowDown: ['y', -1], ArrowRight: ['x', 1], ArrowLeft: ['x', -1] };
+window.addEventListener('keydown', e => {
+  const k = KEYS[e.key]; if (!k || (e.key.startsWith('Arrow') && e.target.closest && e.target.closest('input'))) return;   // las flechas siguen manejando la barra de transparencia
+  e.preventDefault(); move(k[0], k[1] * .1);
+});
 (function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
 })();
 </script>

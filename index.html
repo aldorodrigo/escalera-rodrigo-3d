@@ -355,7 +355,10 @@ for (let s = 235.5; s > -121; s -= 15) bar(rr(176.9, zE1 - 9.6, 196.1, zE1 - 2.4
 [[225.3, 2.9], [233.7, 2.9]].forEach(([s, z]) => cross(2, 197, s, z, C.b10, E12, 'pos. 29 · E1 frente · Ø8 abajo del cuerpo · L 1.95'));
 [[177.75, zE1 - 3.25], [177.75, zE1 - 8.75], [195.25, zE1 - 3.25], [195.25, zE1 - 8.75], [181.9, 2.9], [191.1, 2.9]].forEach(([x, z]) => bar([[x, 241, z], [x, -121, z]], .8, C.b10, E12, 'pos. 30 · E1 pata · Ø8 · L 3.62'));
 [[zE1 - 3.25], [zE1 - 8.75]].forEach(([z]) => cross(125, 175, 193.75, z, C.b10, E12, 'pos. 31 · E1 · Ø8 en la nariz del hombro · L 0.50'));
-for (let x = 15; x < 120; x += 30) bar(inX(x, rr(224.5, 2, 234.5, zE1 - 10.5, 1.2, 2)), .6, C.vest, E12, 'pos. 32 · E1 · estribo Ø6 10×17 c/30 (cuerpo) · L 0.64');
+// pos. 32: estribo del cuerpo Ø6 10×17 c/30, de 2 cm sobre el contrapiso hasta dentro de la tapa (z 2 a 19); corre por el frente/hombro y por toda la pata
+const P32 = 'pos. 32 · E1 · estribo Ø6 10×17 c/30 (cuerpo, sube hasta dentro de la tapa) · L 0.64';
+for (let x = 15; x < 175; x += 30) bar(inX(x, rr(224.5, 2, 234.5, 19, 1.2, 2)), .6, C.vest, E12, P32);
+for (let s = 207; s > -120; s -= 30) bar(rr(181.5, 2, 191.5, 19, 1.2, 2).map(([x, z]) => [x, s, z]), .6, C.vest, E12, P32);
 for (let i = 0; i < 6; i++) cross(3.5, 123.5, 210 - 13.8 * i, zE2 - 3.6, C.b10, E12, 'pos. 33 · E2 · malla sup. Ø6 c/15 E-O · L 1.20');
 for (let i = 0; i < 9; i++) bar([[6 + 14.4 * i, 212.5, zE2 - 3.0], [6 + 14.4 * i, 138.5, zE2 - 3.0]], .6, C.b10, E12, 'pos. 34 · E2 · malla sup. Ø6 c/15 N-S · L 0.74');
 for (let i = 0; i < 8; i++) { const x = 11 + 15 * i;

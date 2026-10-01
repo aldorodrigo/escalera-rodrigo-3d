@@ -37,6 +37,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .note { color: var(--mute); font-size: 12px; line-height: 1.45; }
 .data { font-family: var(--f-data); font-variant-numeric: tabular-nums; font-size: 12px; }
 #toggle { display: none; position: absolute; left: 12px; bottom: 12px; z-index: 3; }
+#lift { position: absolute; right: 12px; bottom: 12px; z-index: 3; display: flex; flex-direction: column; gap: 6px; }
+#lift button { width: 46px; height: 46px; font-size: 18px; line-height: 1; padding: 0; touch-action: none; user-select: none; }
 #load { position: absolute; inset: 0; display: grid; place-items: center; color: var(--mute); pointer-events: none; }
 #load[hidden] { display: none; }
 @media (max-width: 720px) {
@@ -45,6 +47,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   #panel.closed { display: none; }
   #toggle { display: block; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
   #panel:not(.closed) ~ #toggle { bottom: calc(55% + 8px); }
+  #lift { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  #panel:not(.closed) ~ #lift { bottom: calc(55% + 8px); }
   #info { top: 8px; right: 8px; left: 8px; max-width: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -84,11 +88,12 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         <h2>Textos</h2>
         <label class="row"><input id="lbl" type="checkbox" checked><span class="t">Nombres de los elementos</span></label>
       </div>
-      <p class="note">Tocá una barra o un elemento para ver qué es. Arrastrá para girar, dos dedos o rueda para acercar.<br>
+      <p class="note">Tocá una barra o un elemento para ver qué es. Arrastrá para girar, dos dedos o rueda para acercar. ▲ ▼ suben y bajan la cámara (mantené apretado).<br>
       Predimensionado CIRSOC 201 (H21, ADN 500): lo revisa y firma el ingeniero de la obra.</p>
     </div>
   </aside>
   <button id="toggle" type="button">Capas</button>
+  <div id="lift"><button id="up" type="button" aria-label="Subir la cámara" title="Subir la cámara (RePág)">▲</button><button id="dn" type="button" aria-label="Bajar la cámara" title="Bajar la cámara (AvPág)">▼</button></div>
   <div id="info"><b>Tocá un elemento</b><div class="m">Se muestra acá qué es, la posición, el diámetro y el largo.</div></div>
 </div>
 
@@ -111,6 +116,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 const scene = new THREE.Scene(); scene.background = new THREE.Color('#121a22');
 const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 100);
 const controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true;
+controls.minPolarAngle = 0; controls.maxPolarAngle = Math.PI; controls.screenSpacePanning = true;   // se puede mirar desde abajo y desde arriba
 scene.add(new THREE.HemisphereLight(0xe8f0ff, 0x2a2f36, 0.85));
 const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(3, 6, 4); scene.add(sun);
 
@@ -437,6 +443,16 @@ document.getElementById('load').hidden = true;
 const panel = document.getElementById('panel'), tg = document.getElementById('toggle');
 if (window.matchMedia('(max-width: 720px)').matches) panel.classList.add('closed');
 tg.addEventListener('click', () => panel.classList.toggle('closed'));
+// subir / bajar la cámara: mueve la cámara y el punto que mira juntos (mantener apretado para seguir moviendo)
+function lift(d) { camera.position.y += d; controls.target.y += d; controls.update(); }
+let liftT = null;
+[['up', 1], ['dn', -1]].forEach(([id, sg]) => {
+  const b = document.getElementById(id), stop = () => { clearInterval(liftT); liftT = null; };
+  b.addEventListener('pointerdown', e => { e.preventDefault(); lift(sg * .05); clearInterval(liftT); liftT = setInterval(() => lift(sg * .04), 40); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
+  b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lift(sg * .1); } });
+});
+window.addEventListener('keydown', e => { if (e.key === 'PageUp') { e.preventDefault(); lift(.1); } else if (e.key === 'PageDown') { e.preventDefault(); lift(-.1); } });
 (function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
 })();
 </script>

@@ -60,8 +60,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   <div id="load">Cargando el modelo…</div>
   <aside id="panel" class="closed-mobile">
     <header>
-      <h1>Escalera semi cascada · v21</h1>
-      <div class="sub">Igual a las láminas E-01 a E-08 v21 (01/10) · cotas en cm</div>
+      <h1>Escalera semi cascada · v21b</h1>
+      <div class="sub">Igual a las láminas E-01 a E-08 v21 (01/10), con cotas · cotas en cm</div>
     </header>
     <div id="scroll">
       <div class="grp">
@@ -73,6 +73,10 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
           <button id="v-below" type="button">Desde abajo</button>
           <button id="v-land" type="button">Descanso</button>
           <button id="v-arr" type="button">Llegada V1-15</button>
+          <button id="v-cot" type="button">Cotas llegada</button>
+          <button id="v-cotd" type="button">Cotas descanso</button>
+          <button id="v-cot1" type="button">Cotas tramo 1</button>
+          <button id="v-cote" type="button">Cotas E1 y E2</button>
         </div>
       </div>
       <div class="grp">
@@ -88,6 +92,9 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       <div class="grp">
         <h2>Textos</h2>
         <label class="row"><input id="lbl" type="checkbox" checked><span class="t">Nombres de los elementos</span></label>
+        <label class="row"><input id="cot" type="checkbox" checked><span class="sw" style="background:#5fd4ff"></span><span class="t">Cotas (cm)</span></label>
+        <label class="row" for="opt"><span class="t">Transparencia de los textos y cotas</span></label>
+        <input id="opt" type="range" min="0" max="90" value="0">
       </div>
       <p class="note">Tocá una barra o un elemento para ver qué es. Arrastrá para girar, dos dedos o rueda para acercar. ▲ ▼ suben y bajan la cámara, ◀ ▶ la corren a izquierda y derecha (mantené apretado; también con las flechas del teclado).<br>
       Predimensionado CIRSOC 201 (H21, ADN 500): lo revisa y firma el ingeniero de la obra.</p>
@@ -168,13 +175,14 @@ function rr(a0, z0, a1, z1, r, n) {         // rectángulo redondeado en un plan
   pts.push(pts[0]); return pts;
 }
 const inX = (x, list, map) => list.map(([a, z]) => [x, map ? map(a) : a, z]);
+const textMats = [];
 function label(text, x, s, z, col) {
   const c = document.createElement('canvas'), ctx = c.getContext('2d'); const fs = 44;
   ctx.font = '600 ' + fs + 'px "IBM Plex Sans Condensed", Arial'; const w = ctx.measureText(text).width + 28;
   c.width = w; c.height = fs + 22; ctx.font = '600 ' + fs + 'px "IBM Plex Sans Condensed", Arial';
   ctx.fillStyle = 'rgba(18,26,34,.78)'; ctx.fillRect(0, 0, c.width, c.height);
   ctx.fillStyle = col || '#f0a53a'; ctx.textBaseline = 'middle'; ctx.fillText(text, 14, c.height / 2);
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); textMats.push(sp.material);
   sp.scale.set(c.width / c.height * .11, .11, 1); sp.position.copy(P(x, s, z)); sp.renderOrder = 10; G('labels').add(sp);
 }
 
@@ -396,6 +404,75 @@ label('Pd1', -8, -28, 60, '#ff9d9d'); label('P19', -10, -119, 240, '#e0b890'); l
 label('V1-15', 100, 226, 362, '#c0ccd6'); label('V1-14', 208, -50, 362, '#e0b890'); label('V1-13', 100, -114, 362, '#e0b890'); label('E1', 100, 229, 30, '#c0ccd6'); label('E2', 60, 175, 50, '#c0ccd6');
 label('horquillas Ø10 + epoxi', 150, 195, t8 + 12, '#23b04a');
 
+// ============================================================ cotas (cm) – v21b
+const CC = '#5fd4ff', cotaMat = new THREE.LineBasicMaterial({ color: CC, depthTest: false, transparent: true, opacity: .95 });
+function seg(pts) { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts.map(p => P(...p))), cotaMat); l.renderOrder = 9; G('cotas').add(l); }
+function ctext(text, x, s, z) {
+  const c = document.createElement('canvas'), ctx = c.getContext('2d'), fs = 40, f = '500 ' + fs + 'px "IBM Plex Mono", Consolas, monospace';
+  ctx.font = f; c.width = ctx.measureText(text).width + 20; c.height = fs + 16; ctx.font = f;
+  ctx.fillStyle = 'rgba(10,20,30,.85)'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = CC; ctx.textBaseline = 'middle'; ctx.fillText(text, 10, c.height / 2);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); textMats.push(sp.material);
+  sp.scale.set(c.width / c.height * .075, .075, 1); sp.position.copy(P(x, s, z)); sp.renderOrder = 11; G('cotas').add(sp);
+}
+const add3 = (a, b, k) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
+function cota(a, b, txt, off, tn) {      // a, b = [x, s, z]; off = corrimiento de la línea de cota; tn = hacia dónde va el texto
+  off = off || [0, 0, 0];
+  const A = add3(a, off, 1), B = add3(b, off, 1);
+  if (off.some(v => v)) { seg([a, add3(a, off, 1.15)]); seg([b, add3(b, off, 1.15)]); }
+  seg([A, B]);
+  const d = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], L = Math.hypot(...d), u = d.map(v => v / L);
+  const n = Math.abs(u[2]) > .7 ? [0, -1, 0] : [0, 0, 1], t = [(u[0] + n[0]) * 1.8, (u[1] + n[1]) * 1.8, (u[2] + n[2]) * 1.8];
+  [A, B].forEach(p => seg([add3(p, t, -1), add3(p, t, 1)]));
+  const m = add3(A, d, .5); tn = tn || n;
+  if (txt) ctext(txt, ...add3(m, tn, 6));
+}
+const NF11 = nz(1) - 1.5;                 // nariz terminada 11
+// descanso (sobre el piso terminado)
+cota([50, -124, Z10 + 2], [50, 0, Z10 + 2], '124 descanso carril 1');
+cota([135, -124, Z10 + 2], [135, NF11, Z10 + 2], '122.5 carril 2');
+cota([170, -104, Z10 + 2], [170, NF11, Z10 + 2], '102.5 útil hasta V1-13');
+cota([0, -134, Z10 + 2], [200, -134, Z10 + 2], '200 ancho');
+// diente
+cota([120, 17, SOF], [180, 17, SOF], '60 diente', [0, 0, -6], [0, 0, -1]);
+cota([180, -1.5, SOF], [180, 17, SOF], '18.5', [6, 0, 0], [0, 0, -1]);
+cota([180, 17, SOF], [180, 17, Z10], '15', [6, 0, 0], [1, 0, 0]);
+// tramo 2: alzada y huella tipo (pisada 15)
+cota([200, nz(5), zt(4)], [200, nz(5), zt(5)], '18.42 alzada', [6, 0, 0], [1, 0, 0]);
+cota([200, nz(5), zt(5) + 2], [200, nz(6), zt(5) + 2], '27 huella', [6, 0, 0]);
+// llegada: pisada 18 contra la V1-15 y horquillas con epoxi
+cota([200, nz(8), t8], [200, BEAM, t8], '27 pisada 18', [6, 0, 0]);
+cota([200, BEAM, t8], [200, BEAM, 350], '15.4', [6, 0, 0], [1, 0, 0]);
+cota([112.5, BEAM, t8 - 2.5], [112.5, BEAM + 15, t8 - 2.5], '15 patas con epoxi', [0, 0, 8]);
+cota([112.5, BEAM + 15, 310], [112.5, BEAM + 15, t8 - 7.5], '', [0, 6, 0], [0, 1, 0]);
+cota([112.5, BEAM + 15, 310], [112.5, BEAM + 15, t8 - 2.5], (t8 - 2.5 - 310).toFixed(1) + ' / ' + (t8 - 7.5 - 310).toFixed(1) + ' agujeros (desde el fondo de la V1-15)', [0, 12, 0], [0, 1, 0]);
+// tramo 1 (narices terminadas en s = 243 − 27·(k − 1); 1.5 de porcelanato en el canto)
+const NF1 = k => 243 - 27 * (k - 1), ZF = k => zs(k) + 2;
+cota([100, NF1(5), ZF(5)], [100, NF1(6), ZF(5)], '27 huella', [6, 0, 0]);
+cota([100, NF1(6), ZF(5)], [100, NF1(6), ZF(6)], '18.42 alzada', [6, 0, 0], [1, 0, 0]);
+cota([0, NF1(6) - 8, ZF(6)], [100, NF1(6) - 8, ZF(6)], '100 ancho tramo 1', [0, 0, 3]);
+cota([100, 243, 5], [100, 0, 5], '243 = 9 huellas de 27 (frente de E1 a frente del descanso)', [8, 0, 0]);
+{ const sc = u2s(nose1(7) + 11), zb = zs(6) - 12;
+  cota([0, sc, zb], [20, sc, zb], '20', null, [0, 0, -1]); cota([20, sc, zb], [80, sc, zb], '60 contrahuella', null, [0, 0, -1]); cota([80, sc, zb], [100, sc, zb], '20', null, [0, 0, -1]); }
+cota([100, u2s(nose1(7)), zs(7) - 10], [100, u2s(nose1(7)), zs(7)], '10 pisada', [6, 0, 0], [1, 0, 0]);
+cota([80, u2s(nose1(7) + 5), zs(6) - 4], [80, u2s(nose1(7) + 17), zs(6) - 4], '12', [6, 0, 0]);
+cota([80, u2s(nose1(7)), zs(7) - 12], [80, u2s(nose1(7) + 5), zs(7) - 12], '5 nariz', [6, 0, 0], [0, 0, -1]);
+cota([50, 216, ZF(2)], [50, 216, 310], '268 paso libre bajo V1-15', null, [1, 0, 0]);
+ctext('+0.234 E1', 60, 238, ZF(1) + 5); ctext('+0.418 E2', 40, 200, ZF(2) + 5); ctext('±0.00 hall +0.05 / jardín', 150, 120, 8);
+// E1 en L y E2
+cota([0, 243, ZF(1)], [200, 243, ZF(1)], '200 frente de E1', [0, 8, 0]);
+cota([200, 243, 5], [200, 243, ZF(1)], '18.42', [8, 0, 0], [1, 0, 0]);
+cota([200, 243, ZF(1)], [200, 216, ZF(1)], '27', [8, 0, 0]);
+cota([150, 216, ZF(1)], [150, 189, ZF(1)], '27 hombro', null);
+cota([127, 189, ZF(1)], [173, 189, ZF(1)], '46', null, [0, -1, 0]);
+cota([173, 60, ZF(1)], [200, 60, ZF(1)], '27 pata', null);
+cota([200, 216, ZF(1)], [200, -124, ZF(1)], '340 pata de E1 (367 total)', [8, 0, 0]);
+cota([0, 216, ZF(2)], [127, 216, ZF(2)], '127 E2', [0, 0, 6]);
+cota([127, 216, ZF(2)], [127, 135, ZF(2)], '81 E2', [6, 0, 0]);
+cota([127, 135, ZF(1)], [127, 135, ZF(2)], '18.42', [6, 0, 0], [1, 0, 0]);
+// niveles
+ctext('+1.892 descanso', 20, -60, Z10 + 6); ctext('+3.55 PA terminado (+3.50 losa)', 160, 275, 356); ctext('+3.366 pisada 18', 150, nz(8) - 20, t8 + 10);
+
 // ============================================================ capas (panel)
 const LAYERS_C = [['exist', 'Existente: V1-15, losas, contrapiso', '#7d8a96', true], ['muros', 'Muros y vidrio', '#a0826d', true],
   ['nuevo', 'Hormigón nuevo (tramos, descanso, vigas, pilares, V1-13, V1-14)', '#c9d0d6', true], ['fin', 'Porcelanato', '#d8c49a', false]];
@@ -415,11 +492,16 @@ const op = document.getElementById('op');
 function setOp() { const v = 1 - op.value / 100; concMats.forEach(m => { if (!m.fixed) m.opacity = Math.max(.04, Math.min(1, v)); m.depthWrite = m.opacity > .95; }); M.diente.opacity = Math.max(.25, M.nuevo.opacity); }
 op.addEventListener('input', setOp); setOp();
 document.getElementById('lbl').addEventListener('change', e => { G('labels').visible = e.target.checked; });
+const opt = document.getElementById('opt');
+function setOpT() { const v = 1 - opt.value / 100; textMats.forEach(m => { m.opacity = v; }); cotaMat.opacity = Math.max(.15, v * .95); }
+opt.addEventListener('input', setOpT); setOpT();
+document.getElementById('cot').addEventListener('change', e => { G('cotas').visible = e.target.checked; });
 
 // ============================================================ vistas
 const VIEWS = {
   'v-iso': [[5.4, 6.2, 4.6], [1.0, 1.7, -0.5]], 'v-hall': [[5.2, 2.6, 0.1], [1.0, 2.0, -0.6]], 'v-top': [[1.0, 8.2, -0.55], [1.0, 1.5, -0.56]],
-  'v-below': [[3.2, -0.6, 2.2], [1.0, 1.7, 0.2]], 'v-land': [[3.6, 3.5, 2.4], [1.0, 1.75, 0.5]], 'v-arr': [[3.0, 4.2, -3.8], [1.5, 3.2, -2.0]]
+  'v-below': [[3.2, -0.6, 2.2], [1.0, 1.7, 0.2]], 'v-land': [[3.6, 3.5, 2.4], [1.0, 1.75, 0.5]], 'v-arr': [[3.0, 4.2, -3.8], [1.5, 3.2, -2.0]],
+  'v-cot': [[3.8, 4.0, -1.25], [1.45, 3.35, -2.05]], 'v-cotd': [[1.0, 4.6, 0.2], [1.0, 1.9, -0.5]], 'v-cot1': [[3.3, 1.5, -1.9], [0.5, 1.0, -1.2]], 'v-cote': [[2.6, 1.7, -4.3], [1.0, 0.25, -1.8]]
 };
 function go(v) { const [p, t] = VIEWS[v]; camera.position.set(...p); controls.target.set(...t); controls.update(); }
 Object.keys(VIEWS).forEach(k => document.getElementById(k).addEventListener('click', () => go(k)));
